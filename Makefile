@@ -10,8 +10,8 @@
 
 # Compiler
 HC = ghc
-#HCFLAGS = -Wall -O2 -threaded --make
-HCFLAGS = -Wall --make
+#HCFLAGS = -Wall -O2 -threaded --make -fglasgow-exts
+HCFLAGS = -Wall -O2 --make -package qt
 
 # Output paths
 OUTDIR = .
