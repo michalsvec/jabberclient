@@ -11,7 +11,7 @@
 # Compiler
 HC = ghc
 #HCFLAGS = -Wall -O2 -threaded --make -fglasgow-exts
-HCFLAGS = -Wall -O2 --make -package qt
+HCFLAGS = -Wall -O2 -package qt --make
 
 # Output paths
 OUTDIR = .
