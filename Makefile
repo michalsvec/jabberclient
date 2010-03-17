@@ -11,10 +11,11 @@
 # Compiler
 HC = ghc
 #HCFLAGS = -Wall -O2 -threaded --make -fglasgow-exts
-HCFLAGS = -Wall -O2 -package qt --make
+HCFLAGS = -Wall -O2 -package qt --make -i./lib/XMPP-0.0.1 -odir $(BUILDDIR) -hidir $(BUILDDIR)
 
 # Output paths
 OUTDIR = .
+BUILDDIR = $(OUTDIR)/build
 OUTPROJFILE = $(OUTDIR)/jabclient
 
 # Source paths
@@ -28,8 +29,8 @@ all: $(SRCFILES)
 
 # Cleaning
 clean:
-	rm -rf $(SRCDIR)/*.o $(SRCDIR)/*.hi
-	rm -f $(OUTPROJFILE) $(OUTTESTFILE)
+	rm -rf $(BUILDDIR)/*.o $(BUILDDIR)/*.hi
+	rm -f $(OUTPROJFILE)
 
 # Packing
 pack:
