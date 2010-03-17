@@ -6,7 +6,11 @@
 -- | Main project module.
 module Main where
 
-import Qt
+import Qtc.Classes.Qccs
+import Qtc.Classes.Gui
+import Qtc.Gui.Base
+import Qtc.Gui.QApplication
+import Qtc.Gui.QPushButton
 
 main :: IO Int
 main = do
