@@ -12,6 +12,7 @@ import Qtc.Gui.Base
 import Qtc.Gui.QApplication
 import Qtc.Gui.QPushButton
 
+import Control.Parallel
 import XMPP
 import Network
 import IO
@@ -28,6 +29,13 @@ main = do
   resize hello (200::Int, 60::Int)
   qshow hello ()
 
+
+
+
+  rrr `par` qApplicationExec ()
+
+
+rrr = do 
   -- Connect to server...
   c <- openStream botServer
   getStreamStart c
@@ -38,9 +46,7 @@ main = do
     sendPresence
     -- ...and do something.
     run
-
-  qApplicationExec ()
-
+  
 -- nejake funkce
 run :: XMPP ()
 run = do

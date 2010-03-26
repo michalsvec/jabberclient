@@ -11,7 +11,7 @@
 # Compiler
 HC = ghc
 #HCFLAGS = -Wall -O2 -threaded --make -fglasgow-exts
-HCFLAGS = -Wall -O2 -package qt --make -i./lib/XMPP-0.0.1 -odir $(BUILDDIR) -hidir $(BUILDDIR)
+HCFLAGS = -Wall -O2 -threaded -package qt --make -i./lib/XMPP-0.0.1 -odir $(BUILDDIR) -hidir $(BUILDDIR)
 
 # Output paths
 OUTDIR = .
