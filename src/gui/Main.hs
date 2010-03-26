@@ -13,6 +13,7 @@ import Qtc.Gui.QApplication
 import Qtc.Gui.QPushButton
 
 import Control.Parallel
+import Control.Concurrent
 import XMPP
 import Network
 import IO
@@ -29,10 +30,9 @@ main = do
   resize hello (200::Int, 60::Int)
   qshow hello ()
 
+  forkIO rrr
 
-
-
-  rrr `par` qApplicationExec ()
+  qApplicationExec ()
 
 
 rrr = do 
