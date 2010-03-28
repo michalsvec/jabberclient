@@ -35,8 +35,28 @@ main = do
   getStreamStart c
 
 --  async_rcv c
-  forkIO (async_rcv c)
+--  forkIO (async_rcv c)
+
+  runXMPP c $ do
+    -- ...authenticate...
+    startAuth botUsername botServer botPassword
+    sendPresence
+    -- ...and do something.
+  --  run
+ 
 
   qApplicationExec ()
   closeConnection c
+
+
+run :: XMPP ()
+run = do
+  -- Wait for an incoming message...
+  msg <- waitForStanza (isChat `conj` hasBody)
+  let sender = maybe "" id (getAttr "from" msg)
+      len = length $ maybe "" id (getMessageBody msg)
+  -- ...answer...
+  sendMessage sender ("Your message was "++(show len)++" characters long.")
+  -- ...and repeat.
+--  run
 
