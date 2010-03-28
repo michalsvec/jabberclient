@@ -34,8 +34,8 @@ main = do
   c <- openStream botServer
   getStreamStart c
 
-  async_rcv c
---  forkIO (async_rcv c)
+--  async_rcv c
+  forkIO (async_rcv c)
 
   qApplicationExec ()
   closeConnection c
