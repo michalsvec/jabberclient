@@ -14,46 +14,123 @@ module XMPPLight where
 import Network
 import System.IO
 import Data.IORef
-import Control.Monad
 import XMPP
 import XMPPMonad
 -}
 
---import XMLParse
-import XMPPConnection
-import TCPConnection
+--import Control.Monad
+
+--import Network
+--import System.IO
+--import Data.IORef
+
+import TCPConnection 
+import XMPPConnection hiding ( closeConnection )
+import qualified XMPPConnection
+
+--import XMPPXML
+
+--import XMPPMonad
+import Control.Monad.State
+import XMLParse
+import System.Random
+import Maybe
+
+connectToServer :: String -> IO TCPConnection
+connectToServer server = do
+  c <- openStream server
+  getStreamStart c
+  return c
+
+closeConnection :: TCPConnection -> IO ()
+closeConnection c = XMPPConnection.closeConnection c
+
+login :: TCPConnection
+      -> String             -- ^Username (part before \@ in JID)
+      -> String             -- ^Server (part after \@ in JID)
+      -> String             -- ^Resource (unique identifier for this connection)
+      -> IO ()
+login c username server password = do
+  response <- sendIqWait c server "get" [XML "query"
+                                       [("xmlns","jabber:iq:auth")]
+                                       [XML "username"
+                                        []
+                                        [CData username]]]
+  return ()                                        
+
+
+-- |Send an IQ request, returning the randomly generated ID.
+sendIq :: TCPConnection
+       -> String                -- ^JID of recipient
+       -> String                -- ^Type of IQ, either \"get\" or \"set\"
+       -> [XMLElem]             -- ^Payload elements
+       -> IO String             -- ^ID of sent stanza
+sendIq c to iqtype payload = do
+  iqid <- liftIO $ (randomIO::IO Int)
+  sendStanza c $ XML "iq"
+                     [("to", to),
+                      ("type", iqtype),
+                      ("id", show iqid)]
+                     payload
+  return $ show iqid
+
+-- |Send an IQ request and wait for the response, without blocking
+-- other activity.
+sendIqWait :: TCPConnection
+           -> String            -- ^JID of recipient
+           -> String            -- ^Type of IQ, either \"get\" or \"set\"
+           -> [XMLElem]         -- ^Payload elements
+           -> IO XMLElem        -- ^Response stanza
+sendIqWait c to iqtype payload = do
+  iqid <- sendIq c to iqtype payload
+--  waitForStanza $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
+  return $ XML "iq" [] []
+
+{-
+-- |Send a response to a received IQ stanza.
+sendIqResponse :: XMLElem       -- ^Original stanza, from which id and
+                                -- recipient are taken
+               -> String        -- ^Type of response, either
+                                -- \"result\" or \"error\"
+               -> [XMLElem]     -- ^Payload elements
+               -> XMPP (Maybe ())   -- ^Just () if original stanza had
+                                    -- a \"from\" attribute
+sendIqResponse inResponseTo iqtype payload =
+      case getAttr "from" inResponseTo of
+        Nothing ->
+            -- "from" attribute missing?
+            return Nothing
+        Just sender ->
+            let iqid = maybe "" id (getAttr "id" inResponseTo)
+            in do
+                sendStanza $ XML "iq"
+                               [("to", sender),
+                                ("type", iqtype),
+                                ("id", iqid)]
+                               payload
+                return $ Just ()
+-}
+
+{-
+  case xmlPath ["query","password"] response of
+    Nothing -> error "plaintext authentication not supported by server"
+    Just _ -> do
+      response' <- sendIqWait server "set" [XML "query"
+                                            [("xmlns","jabber:iq:auth")]
+                                            [XML "username" []
+                                                     [CData username],
+                                             XML "password" []
+                                                     [CData password],
+                                             XML "resource" []
+                                                     [CData "hsXmpp"]]]
+      case getAttr "type" response' of
+        Just "result" -> liftIO $ putStrLn "Authentication succeeded"
+        _ -> error "Authentication failed"
+
+-}
 
 async_rcv :: TCPConnection -> IO ()
 async_rcv c = do
   getStanzas c
   return ()
-
-
-{-
-main :: IO ()-- Int
-main = do
-  qApplication ()
-  hello <- qPushButton "Hello qtHaskell World"
-  resize hello (200::Int, 60::Int)
-  qshow hello ()
-
-  -- Connect to server...
-  c <- openStream botServer
-  getStreamStart c
-
-  --parseBuffered c deepTags
-  getStanzas c
-
---  print (ssender)
-
---  forkIO (getStanzas c)
-
---  print ssender
-
-  qApplicationExec ()
---  print ssender
-  closeConnection c
-
--}
-
 
