@@ -10,6 +10,7 @@ module XMPPMonad ( XMPP
                  , StanzaHandler
                  , Control.Monad.State.liftIO
                  )
+
     where
 
 import Control.Monad.State

@@ -12,53 +12,31 @@ import Qtc.Gui.Base
 import Qtc.Gui.QApplication
 import Qtc.Gui.QPushButton
 
-import Control.Parallel
 import Control.Concurrent
-import XMPP
-import Network
 import IO
+--import XMPPConnection
+import XMPP
+import XMPPLight
 
 -- The bot's JID is "bot@example.com"
 botUsername = "jab_pavel"
 botServer = "jabber.cz"
 botPassword = "jab_pavel"
 
-main :: IO Int
+main :: IO ()-- Int
 main = do
   qApplication ()
   hello <- qPushButton "Hello qtHaskell World"
   resize hello (200::Int, 60::Int)
   qshow hello ()
 
-  forkIO rrr
-
-  qApplicationExec ()
-
-
-rrr = do 
   -- Connect to server...
   c <- openStream botServer
   getStreamStart c
 
-  runXMPP c $ do
-    -- ...authenticate...
-    startAuth botUsername botServer botPassword
-    sendPresence
-    -- ...and do something.
-    run
-  
--- nejake funkce
-run :: XMPP ()
-run = do
-  -- Wait for an incoming message...
-  
-  msg <- waitForStanza (isChat `conj` hasBody)
-  let sender = maybe "" id (getAttr "from" msg)
-      len = length $ maybe "" id (getMessageBody msg)
-  -- ...answer...
-  sendMessage sender ("Your message was "++(show len)++" characters long.")
-  -- ...and repeat.
-  
---  run
+  async_rcv c
+--  forkIO (async_rcv c)
 
--- End of file
+  qApplicationExec ()
+  closeConnection c
+

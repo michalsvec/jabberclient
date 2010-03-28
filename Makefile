@@ -17,11 +17,13 @@ HCFLAGS = -Wall -O2 -threaded -package qt --make -i./lib/XMPP-0.0.1 -odir $(BUIL
 OUTDIR = .
 BUILDDIR = $(OUTDIR)/build
 OUTPROJFILE = $(OUTDIR)/jabclient
+#OUTPROJFILE = $(OUTDIR)/test
 
 # Source paths
 SRCDIR = ./src
-SRCFILES = $(SRCDIR)/gui/Main.hs
-#	$(SRCDIR)/xmpp/*.hs
+#SRCFILES = ./test.hs
+SRCFILES = $(SRCDIR)/gui/Main.hs \
+	$(SRCDIR)/xmpp/*.hs
 
 # Project compilation
 all: $(SRCFILES)

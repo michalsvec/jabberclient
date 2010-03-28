@@ -1,6 +1,7 @@
 module TCPConnection ( TCPConnection
                      , openStream
                      , getStreamStart
+                     , parseBuffered
                      )
     where
 
@@ -65,7 +66,7 @@ parseBuffered c@(TCPConnection h bufvar) parser = do
 getString :: Handle -> IO String
 getString h =
     do
-      hWaitForInput h (-1)
+      hWaitForInput h (0)
       getEverything
     where getEverything =
               do
