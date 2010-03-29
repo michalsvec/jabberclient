@@ -36,6 +36,8 @@ main = do
   connection <- connectToServer server
   login connection username server passwd
 
+  sendPresence connection
+
 --  async_rcv c
 --  forkIO (async_rcv c)
 

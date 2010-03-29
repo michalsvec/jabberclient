@@ -26,6 +26,18 @@ import XMLParse
 
 type StanzaPredicate = (XMLElem -> Bool)
 
+-- |Apply the predicate to the named attribute.  Return false if the
+-- tag has no such attribute.
+attributeMatches :: String      -- ^Attribute name
+                 -> (String -> Bool) -- ^Attribute value predicate
+                 -> StanzaPredicate
+attributeMatches attr p predic = Stanzas.attributeMatches attr p predic
+
+-- |Return true if the tag has the given name.
+hasNodeName :: String -> StanzaPredicate
+hasNodeName name (XML name' _ _) = name == name'
+-- Patterns not matched: _ (CData _)
+
 -- |Return true if the message stanza has body text.
 hasBody :: StanzaPredicate
 hasBody = Stanzas.hasBody 
