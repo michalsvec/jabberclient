@@ -45,26 +45,36 @@ connectToServer server = do
 closeConnection :: TCPConnection -> IO ()
 closeConnection c = XMPPConnection.closeConnection c
 
-login :: TCPConnection
-      -> String             -- ^Username (part before \@ in JID)
-      -> String             -- ^Server (part after \@ in JID)
-      -> String             -- ^Resource (unique identifier for this connection)
-      -> IO ()
+login :: TCPConnection -> String -> String -> String -> IO ()
 login c username server password = do
   response <- sendIqWait c server "get" [XML "query"
-                                       [("xmlns","jabber:iq:auth")]
-                                       [XML "username"
-                                        []
-                                        [CData username]]]
+                                          [("xmlns","jabber:iq:auth")]
+                                          [XML "username"
+                                            []
+                                            [CData username]
+                                          ]
+                                        ]
   return ()                                        
 
 
+-- |Send an IQ request and wait for the response, with blocking other activity.
+-- JID of recipient
+-- Type of IQ, either \"get\" or \"set\"
+-- Payload elements
+-- Response stanza
+sendIqWait :: TCPConnection -> String -> String -> [XMLElem] -> IO XMLElem
+sendIqWait c to iqtype payload = do
+  iqid <- sendIq c to iqtype payload
+--  waitForStanza $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
+  return $ XML "iq" [] []
+
+
 -- |Send an IQ request, returning the randomly generated ID.
-sendIq :: TCPConnection
-       -> String                -- ^JID of recipient
-       -> String                -- ^Type of IQ, either \"get\" or \"set\"
-       -> [XMLElem]             -- ^Payload elements
-       -> IO String             -- ^ID of sent stanza
+-- ^JID of recipient
+-- ^Type of IQ, either \"get\" or \"set\"
+-- ^Payload elements
+-- ^ID of sent stanza
+sendIq :: TCPConnection -> String -> String -> [XMLElem] -> IO String
 sendIq c to iqtype payload = do
   iqid <- liftIO $ (randomIO::IO Int)
   sendStanza c $ XML "iq"
@@ -74,17 +84,6 @@ sendIq c to iqtype payload = do
                      payload
   return $ show iqid
 
--- |Send an IQ request and wait for the response, without blocking
--- other activity.
-sendIqWait :: TCPConnection
-           -> String            -- ^JID of recipient
-           -> String            -- ^Type of IQ, either \"get\" or \"set\"
-           -> [XMLElem]         -- ^Payload elements
-           -> IO XMLElem        -- ^Response stanza
-sendIqWait c to iqtype payload = do
-  iqid <- sendIq c to iqtype payload
---  waitForStanza $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
-  return $ XML "iq" [] []
 
 {-
 -- |Send a response to a received IQ stanza.

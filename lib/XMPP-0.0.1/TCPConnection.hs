@@ -53,7 +53,7 @@ parseBuffered c@(TCPConnection h bufvar) parser = do
   buffer <- readIORef bufvar
   input <- getString h
   putStrLn $ "got '" ++ buffer ++ input ++ "'"
-  case parse (getRest parser) "XXX - XXX" (buffer++input) of
+  case parse (getRest parser) "" (buffer++input) of
     Right (result, rest) ->
         do
           writeIORef bufvar rest

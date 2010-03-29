@@ -34,6 +34,7 @@ main = do
 
   -- Connect to server...
   connection <- connectToServer server
+  login connection username server passwd
 
 --  async_rcv c
 --  forkIO (async_rcv c)
