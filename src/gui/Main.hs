@@ -12,7 +12,7 @@ import Qtc.Gui.Base
 import Qtc.Gui.QApplication
 import Qtc.Gui.QPushButton
 
---import Control.Concurrent
+import Control.Concurrent
 import IO
 import XMPPLight
 --import XMPPXML
@@ -38,7 +38,22 @@ main = do
 
   sendPresence connection
 
---  async_rcv c
+  --  poslat neco
+  -- thread delay 
+  -- prijmotu vse
+
+  threadDelay (1000000)
+
+  async_rcv connection
+
+  async_rcv connection
+
+  async_rcv connection
+
+  async_rcv connection
+
+  async_rcv connection
+
 --  forkIO (async_rcv c)
 
   --startAuth botUsername botServer botPassword
