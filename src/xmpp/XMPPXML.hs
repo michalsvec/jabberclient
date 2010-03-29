@@ -7,71 +7,72 @@
 module XMPPXML where
 
 import Stanzas hiding (
-                 sendIq
---               , sendIqWait
---               , hasBody
+                hasBody
                , getMessageBody
---               , sendMessage
---               , sendPresence
---               , conj
---               , attributeMatches
+               , conj
+               , attributeMatches
                , isMessage
                , isPresence
                , isIq
---               , isChat
---               , isFrom
---               , iqXmlns
---               , iqGet
---               , iqSet
---               , handleVersion
+               , isChat
+               , isFrom
+               , iqXmlns
+               , iqGet
+               , iqSet
+               , handleVersion
                )
 import qualified Stanzas
 import XMLParse
 
+type StanzaPredicate = (XMLElem -> Bool)
+
+-- |Return true if the message stanza has body text.
+hasBody :: StanzaPredicate
+hasBody = Stanzas.hasBody 
+
+-- |Get the body text of the message stanza, if any.
 getMessageBody :: XMLElem -> Maybe String
 getMessageBody stanza = Stanzas.getMessageBody stanza
 
-createMessage :: String -> String -> XMLElem
-createMessage to body = XML "message"
-                          [("to", to),
-                           ("type", "chat")]
-                          [XML "body" []
-                               [CData body]]
 
-isMessage :: XMLElem -> Bool
-isMessage stanza = Stanzas.isMessage stanza
+--- Stanza predicates ---
 
-isPresence :: XMLElem -> Bool
-isPresence stanza = Stanzas.isPresence stanza
-
-isIq :: XMLElem -> Bool
-isIq stanza = Stanzas.isIq stanza
+-- |Conjunction (\"and\") of two predicates.
+conj :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
+conj = Stanzas.conj
 
 
-{-
-getMessageBody' :: XMLElem -> Maybe String
-getMessageBody' stanza =
-     do
-       bodyTag <- xmlPath ["body"] stanza
-       getCdata bodyTag
+--- The three basic stanza types ---
 
-createMessage' :: String -> String -> XMLElem
-createMessage' to body = XML "message"
-                          [("to", to),
-                           ("type", "chat")]
-                          [XML "body" []
-                               [CData body]]
+-- |Return true if the tag is a message stanza.
+isMessage :: StanzaPredicate
+isMessage = Stanzas.isMessage
 
-isMessage' :: XMLElem -> Bool
-isMessage' stanza = hasNodeName' "message" stanza
+-- |Return true if the tag is a presence stanza.
+isPresence :: StanzaPredicate
+isPresence = Stanzas.isPresence
 
-isPresence' :: XMLElem -> Bool
-isPresence' stanza = hasNodeName' "presence" stanza
+-- |Return true if the tag is an IQ stanza.
+isIq :: StanzaPredicate
+isIq = Stanzas.isIq
 
-isIq' :: XMLElem -> Bool
-isIq' stanza = hasNodeName' "iq" stanza
+-- |Return true if the tag is a chat message.
+isChat :: StanzaPredicate
+isChat = Stanzas.isChat
 
-hasNodeName' :: String -> XMLElem -> Bool
-hasNodeName' name ( XML name' _ _ ) = name == name'
+-- |Return true if the stanza is from the given JID.
+isFrom :: String -> StanzaPredicate
+isFrom = Stanzas.isFrom 
 
--}
+-- |Return true if the stanza is an IQ stanza in the given namespace.
+iqXmlns :: String -> StanzaPredicate
+iqXmlns = Stanzas.iqXmlns
+
+-- |Return true if the stanza is a \"get\" request in the given namespace.
+iqGet :: String -> StanzaPredicate
+iqGet = Stanzas.iqGet
+
+-- |Return true if the stanza is a \"set\" request in the given namespace.
+iqSet :: String -> StanzaPredicate
+iqSet = Stanzas.iqSet
+
