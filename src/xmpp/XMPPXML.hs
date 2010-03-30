@@ -10,7 +10,6 @@ import Stanzas hiding (
                 hasBody
                , getMessageBody
                , conj
-               , attributeMatches
                , isMessage
                , isPresence
                , isIq
