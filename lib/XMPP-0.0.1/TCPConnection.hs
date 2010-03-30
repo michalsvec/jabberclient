@@ -66,7 +66,7 @@ parseBuffered c@(TCPConnection h bufvar) parser = do
 getString :: Handle -> IO String
 getString h =
     do
-      hWaitForInput h 1 --(-1)
+      hWaitForInput h 0 --(-1)
       getEverything
     where getEverything =
               do
