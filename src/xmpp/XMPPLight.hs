@@ -6,7 +6,7 @@
 -- | Main project module.
 module XMPPLight where
 
---import Control.Concurrent
+import Control.Concurrent
 --import Network
 --import IO
 
@@ -28,13 +28,17 @@ import TCPConnection
 import XMPPConnection hiding ( closeConnection )
 import qualified XMPPConnection
 
---import XMPPXML
+import XMPPXML
 
---import XMPPMonad
-import Control.Monad.State
+--import XMPP
+
+--import Control.Monad.State
 import XMLParse
 import System.Random
-import Maybe
+--import Maybe
+
+--import XMPPMonad hiding ( sendStanza )
+
 
 connectToServer :: String -> IO TCPConnection
 connectToServer server = do
@@ -54,7 +58,23 @@ login c username server password = do
                                             [CData username]
                                           ]
                                         ]
-  return ()                                        
+
+--  print $ response
+  case xmlPath ["query","password"] response of
+    Nothing -> error "plaintext authentication not supported by server"
+    Just _ -> do
+      response' <- sendIqWait c server "set" [XML "query"
+                                            [("xmlns","jabber:iq:auth")]
+                                            [XML "username" []
+                                                     [CData username],
+                                             XML "password" []
+                                                     [CData password],
+                                             XML "resource" []
+                                                     [CData "hsXmpp"]]]
+      case getAttr "type" response' of
+        Just "result" -> putStrLn "Authentication succeeded"
+        _ -> error "Authentication failed"
+
 
 
 -- |Send an IQ request and wait for the response, with blocking other activity.
@@ -65,8 +85,10 @@ login c username server password = do
 sendIqWait :: TCPConnection -> String -> String -> [XMLElem] -> IO XMLElem
 sendIqWait c to iqtype payload = do
   iqid <- sendIq c to iqtype payload
---  waitForStanza $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
-  return $ XML "iq" [] []
+  threadDelay (1000000)
+  waitForStanza c $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
+
+--  return $ fromMaybe (XML "iq" [] []) xxx --  return $ XML "iq" [] []
 
 
 -- |Send an IQ request, returning the randomly generated ID.
@@ -76,7 +98,7 @@ sendIqWait c to iqtype payload = do
 -- ^ID of sent stanza
 sendIq :: TCPConnection -> String -> String -> [XMLElem] -> IO String
 sendIq c to iqtype payload = do
-  iqid <- liftIO $ (randomIO::IO Int)
+  iqid <- randomIO::IO Int
   sendStanza c $ XML "iq"
                      [("to", to),
                       ("type", iqtype),
@@ -84,7 +106,23 @@ sendIq c to iqtype payload = do
                      payload
   return $ show iqid
 
+waitForStanza :: TCPConnection -> (XMLElem -> Bool) -> IO XMLElem --(Maybe XMLElem)
+waitForStanza c predic = do 
+  allStanzas <- getStanzas c
+  matchPred allStanzas
+    where matchPred (stanza:stanzas) = do
+            if predic stanza
+              then return stanza -- $ Just stanza
+              else matchPred stanzas
+--          matchPred ([]) = return Nothing
+-- jestli to dojde sem znamena to ze sme cekali moc malo 
+-- stalo by zato znova pockat :D aspon este malou chvili
 
+
+sendPresence :: TCPConnection -> IO ()
+sendPresence c = sendStanza c $ XML "presence" [] []
+
+       
 {-
 -- |Send a response to a received IQ stanza.
 sendIqResponse :: XMLElem       -- ^Original stanza, from which id and
@@ -108,24 +146,6 @@ sendIqResponse inResponseTo iqtype payload =
                                 ("id", iqid)]
                                payload
                 return $ Just ()
--}
-
-{-
-  case xmlPath ["query","password"] response of
-    Nothing -> error "plaintext authentication not supported by server"
-    Just _ -> do
-      response' <- sendIqWait server "set" [XML "query"
-                                            [("xmlns","jabber:iq:auth")]
-                                            [XML "username" []
-                                                     [CData username],
-                                             XML "password" []
-                                                     [CData password],
-                                             XML "resource" []
-                                                     [CData "hsXmpp"]]]
-      case getAttr "type" response' of
-        Just "result" -> liftIO $ putStrLn "Authentication succeeded"
-        _ -> error "Authentication failed"
-
 -}
 
 async_rcv :: TCPConnection -> IO ()
