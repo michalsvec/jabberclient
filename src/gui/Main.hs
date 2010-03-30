@@ -125,7 +125,9 @@ main = do
   
   -- nastaveni timeru
   timer <- qTimer ()
-  connectSlot timer "timeout()" sendButton "click()" $ on_timer_event conversationBox messageBox
+-- !!!!!!!!!!!!!!11
+-- tady je spatny slot, musi se to posilat do jineho slotu  
+--  connectSlot timer "timeout()" sendButton "click()" $ on_timer_event conversationBox messageBox
   start timer (1000::Int)
   
   
