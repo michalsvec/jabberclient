@@ -32,7 +32,7 @@ import XMPPXML
 
 --import XMPP
 
---import Control.Monad.State
+import Control.Monad.State
 import XMLParse
 import System.Random
 import Maybe
@@ -41,6 +41,9 @@ import Maybe
 
 --import Qtc.ClassTypes.Core
 import Qtc.ClassTypes.Gui
+
+--newConnection :: IO TCPConnection
+--newConnection = return TCPConnection
 
 connectToServer :: String -> IO TCPConnection
 connectToServer server = do
@@ -122,6 +125,82 @@ waitForStanza c tryout predic = do
 -- jestli to dojde sem znamena to ze sme cekali moc malo 
 -- stalo by zato znova pockat :D aspon este malou chvili
 -- -}
+
+
+getContactList :: TCPConnection -> IO [(String,String)]
+getContactList c = do
+    iqid <- randomIO::IO Int
+    sendStanza c $ XML "iq"
+                       [("type", "get"),
+                        ("id", show iqid)]
+                       [XML "query" [("xmlns", "jabber:iq:roster")] []]
+    (XML a b c) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
+    print "xxxxxxxxxxxxxxxxxx"
+    let (XML d e f) = (c!!0)
+    print $ show f
+    return $ getContact f []
+        where
+            getContact :: [XMLElem] -> [(String,String)] -> [(String,String)]
+            getContact (x:xs) list = do
+                                        let name = fromMaybe "--err:name--" (getAttr "name" x)
+                                        let jid = fromMaybe "--err:jid--" (getAttr "jid" x)
+                                        getContact xs list ++ [ (name,jid) ]
+            getContact [] list = list
+
+{-
+getContactList :: TCPConnection -> IO [String]
+getContactList c = do
+  iqid <- randomIO::IO Int
+  sendStanza c $ XML "iq"
+                     [("type", "get"),
+                      ("id", show iqid)]
+                     [XML "query" [("xmlns", "jabber:iq:roster")] []]
+  (XML a b d) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
+  print (d)
+  let (XML e f g) = (d !!0)
+--  in   print (d)
+--  print "xxxxxxxxxxxxxxxxxx"
+  print (g)
+--  print oneStr
+  return []
+  --  show "dasf"
+-}
+{-
+ getContactList :: TCPConnection -> IO [String]
+getContactList c = do
+    iqid <- randomIO::IO Int
+    sendStanza c $ XML "iq"
+                       [("type", "get"),
+                        ("id", show iqid)]
+                       [XML "query" [("xmlns", "jabber:iq:roster")] []]
+    (XML a b c) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
+    print "xxxxxxxxxxxxxxxxxx"
+    let (XML d e f) = (c!!0)
+    print $ show f
+    return $ getContact f []
+        where
+            getContact :: [XMLElem] -> [String] -> [String]
+            getContact (x:xs) list = do
+                                        let name = fromMaybe "--err:name--" (getAttr "name" x)
+                                        let jid = fromMaybe "--err:jid--" (getAttr "jid" x)
+                                        getContact xs list ++ [ name ]
+            getContact [] list = list
+-}
+
+{-
+  let (XML d e f) = (c!!1)
+    getContact f i []
+    where getContanct elem i list = do
+                                        list ++ [ getAttr "name" i ] 
+-}
+{-
+  response <- sendIqWait c "" "get" [XML "query"
+                                          [("xmlns","jabber:iq:roster")] []
+                                        ]
+  return ()                                        
+-}
+--  return xmlToString False $ response                                        
+
 
 sendPresence :: TCPConnection -> IO ()
 sendPresence c = sendStanza c $ XML "presence" [] []

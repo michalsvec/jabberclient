@@ -35,6 +35,9 @@ import Qtc.Core.QTimer
 import Qtc.Enums.Gui.QDialogButtonBox
 import Qtc.Gui.QDialogButtonBox
 
+import Qtc.Enums.Gui.QDialog --eRejected :: DialogCode eAccepted :: DialogCode
+import System.Exit
+
 import XMPPLight
 
 type MyQDialog = QWidgetSc (CMyQDialog)
@@ -90,14 +93,12 @@ main = do
   rejectButton <- myQPushButton $ "Piss off"
   
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted labInfo userInput passwordInput serverInput connDialog
-  connectSlot rejectButton "clicked()" app "quit()" ()
+  connectSlot rejectButton "clicked()" rejectButton "click()" $ on_conn_rejected connDialog
 
   addWidget connLayout (acceptButton, 5::Int, 0::Int, 1::Int, 1::Int)
   addWidget connLayout (rejectButton, 5::Int, 1::Int, 1::Int, 1::Int)
   
   setLayout connDialog connLayout
-  qshow connDialog ()
-
 
   -- HLAVNI PROGRAM! 
   
@@ -147,10 +148,21 @@ main = do
   setWindowTitle dialog "Jabber client 3000"
   qshow dialog ()
 
+  retDialogCode <- exec connDialog ()
+  if retDialogCode == 0
+    then exitWith (ExitFailure 1)
+    else print ""--sendPresence connection
+
   connection <- connectToServer server
   login connection username server passwd
 
   sendPresence connection
+
+  res <- result connDialog ()
+
+  print res
+
+
 
   ok <- qApplicationExec ()
   closeConnection connection 
@@ -177,8 +189,11 @@ on_conn_accepted labInfo userInput passwordInput serverInput connDialog this
     if user == "michalek"
       then do hide connDialog ()
       else do setText labInfo "Login incorrect"
+    accept connDialog ()
 
-    return ()
+on_conn_rejected :: QDialog () -> MyQPushButton -> IO ()
+on_conn_rejected connDialog this = do
+  reject connDialog ()
 
 {-
  UZITECNY FICURKY
