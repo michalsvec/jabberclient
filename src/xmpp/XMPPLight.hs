@@ -22,7 +22,7 @@ import XMPPMonad
 
 --import Network
 --import System.IO
-import Data.IORef
+--import Data.IORef
 
 import TCPConnection 
 import XMPPConnection hiding ( closeConnection )
@@ -39,7 +39,7 @@ import Maybe
 
 --import XMPPMonad hiding ( sendStanza )
 
-import Qtc.ClassTypes.Core
+--import Qtc.ClassTypes.Core
 import Qtc.ClassTypes.Gui
 
 connectToServer :: String -> IO TCPConnection
@@ -87,8 +87,7 @@ login c username server password = do
 sendIqWait :: TCPConnection -> String -> String -> [XMLElem] -> IO XMLElem
 sendIqWait c to iqtype payload = do
   iqid <- sendIq c to iqtype payload
-  waitForStanza c (10::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
-
+  waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
 --  return $ fromMaybe (XML "iq" [] []) xxx --  return $ XML "iq" [] []
 
 
@@ -108,8 +107,8 @@ sendIq c to iqtype payload = do
   return $ show iqid
 
 waitForStanza :: TCPConnection -> Int -> (XMLElem -> Bool) -> IO XMLElem --(Maybe XMLElem)
-waitForStanza c repeat predic = do
-  if repeat < 1
+waitForStanza c tryout predic = do
+  if tryout < 1
     then do error "authentication: timeout reachet - no response from server"
     else do allStanzas <- getStanzas c
             matchPred allStanzas
@@ -119,21 +118,10 @@ waitForStanza c repeat predic = do
                       else matchPred stanzas
                   matchPred ([]) = do
                     threadDelay (10000)
-                    waitForStanza c (repeat-1) predic
+                    waitForStanza c (tryout-1) predic
 -- jestli to dojde sem znamena to ze sme cekali moc malo 
 -- stalo by zato znova pockat :D aspon este malou chvili
 -- -}
-
-increment v = do
-  value <- readIORef v
-  writeIORef v (value + 1)
-
-decrement v = do
-  value <- readIORef v
-  writeIORef v (value - 1)
-
-
-
 
 sendPresence :: TCPConnection -> IO ()
 sendPresence c = sendStanza c $ XML "presence" [] []
