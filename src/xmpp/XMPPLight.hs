@@ -42,14 +42,14 @@ import Maybe
 --import Qtc.ClassTypes.Core
 import Qtc.ClassTypes.Gui
 
---newConnection :: IO TCPConnection
---newConnection = return TCPConnection
-
 connectToServer :: String -> IO TCPConnection
 connectToServer server = do
   c <- openStream server
   getStreamStart c
   return c
+
+emptyConnection :: IO TCPConnection
+emptyConnection = newStream
 
 closeConnection :: TCPConnection -> IO ()
 closeConnection c = XMPPConnection.closeConnection c
@@ -204,6 +204,15 @@ getContactList c = do
 
 sendPresence :: TCPConnection -> IO ()
 sendPresence c = sendStanza c $ XML "presence" [] []
+
+sendMessage :: TCPConnection -> String -> String -> IO ()
+sendMessage c target text = do
+  sendStanza c $ XML "message"
+                   [("to", target),
+                    ("type", "chat")]
+                   [XML "body" []
+                        [CData text]]
+
 
        
 {-
