@@ -10,18 +10,10 @@
 
 module Main where
 
-import Qtc.ClassTypes.Core
+
 import Qtc.ClassTypes.Gui
-import Qtc.Classes.Base
 import Qtc.Classes.Qccs
-import Qtc.Classes.Qccs_h
-import Qtc.Classes.Core
-import Qth.ClassTypes.Core
-import Qth.Core.Size
-import Qth.Core.Rect
-import Qtc.Core.QSize
 import Qtc.Classes.Gui
-import Qtc.Enums.Base
 import Qtc.Enums.Classes.Core
 import Qtc.Core.Base
 import Qtc.Gui.Base
@@ -40,6 +32,8 @@ import Qtc.Gui.QPushButton
 import Qtc.Gui.QMessageBox
 import Qtc.Gui.QListView
 import Qtc.Core.QTimer
+import Qtc.Enums.Gui.QDialogButtonBox
+import Qtc.Gui.QDialogButtonBox
 
 import XMPPLight
 
@@ -68,26 +62,46 @@ main = do
   dialog <- myQDialog
   mb <- qMessageBox dialog
 
-{-
-  -- nepovedene shitties s vyskakovacim prihlasovaicm oknem
-  connDialog1 <- myQDialog
-  connDialog <- qMessageBox connDialog1
+  -- zobrazeni uvodniho dialogu pro pripojeni na server
+  connDialog <- qDialog dialog
   connLayout <- qGridLayout ()
-
-  hostInput <- qLineEdit () 
+  setModal connDialog True
+  
   userInput <- qLineEdit () 
   passwordInput <- qLineEdit () 
-  portInput <- qLineEdit () 
   serverInput <- qLineEdit () 
 
-  lab1 <- qLabel "labelka"
-  addWidget connLayout (lab1, 0::Int, 0::Int, 1::Int, 1::Int)
-  addWidget connLayout (hostInput, 0::Int, 1::Int, 1::Int, 1::Int)
-  setLayout connDialog connLayout
-  qshow connDialog1 ()
--}
+  labInfo <- qLabel "Connect pls"
+  lab1 <- qLabel "Server: "
+  lab2 <- qLabel "User: "
+  lab3 <- qLabel "Password: "
+  
+  addWidget connLayout (labInfo, 0::Int, 0::Int, 1::Int, 2::Int)
+  addWidget connLayout (lab1, 1::Int, 0::Int, 1::Int, 1::Int)
+  addWidget connLayout (serverInput, 1::Int, 1::Int, 1::Int, 1::Int)
+  addWidget connLayout (lab2, 2::Int, 0::Int, 1::Int, 1::Int)
+  addWidget connLayout (userInput, 2::Int, 1::Int, 1::Int, 1::Int)
+  addWidget connLayout (lab3, 3::Int, 0::Int, 1::Int, 1::Int)
+  addWidget connLayout (passwordInput, 3::Int, 1::Int, 1::Int, 1::Int)
+  
+  -- tlacitka pro potverzeni - v pripade odmitnuti zavre aplikaci, 
+  -- v pripade potvrzeni vola funkci, ktera se prihlasi a zmizi okenko
+  acceptButton <- myQPushButton $ "Connect me, bro"
+  rejectButton <- myQPushButton $ "Piss off"
+  
+  connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted labInfo userInput passwordInput serverInput connDialog
+  connectSlot rejectButton "clicked()" app "quit()" ()
 
- -- Definice jednotlivych widgetu v programu
+  addWidget connLayout (acceptButton, 5::Int, 0::Int, 1::Int, 1::Int)
+  addWidget connLayout (rejectButton, 5::Int, 1::Int, 1::Int, 1::Int)
+  
+  setLayout connDialog connLayout
+  qshow connDialog ()
+
+
+  -- HLAVNI PROGRAM! 
+  
+  -- Definice jednotlivych widgetu v programu
   -- tlacitko
   sendButton <- myQPushButton $ "Odeslat"
   messageBox <- qLineEdit ()
@@ -104,7 +118,7 @@ main = do
 
   menuBar <- qMenuBar ()
   fileMenu <- qMenu ("&File", dialog)
-  connectAction <- addAction fileMenu "&Connect"
+  --connectAction <- addAction fileMenu "&Connect"
   exitAction <- addAction fileMenu "E&xit"
   addMenu menuBar fileMenu
   connectSlot exitAction "triggered()" app "quit()" ()
@@ -124,10 +138,11 @@ main = do
   setLayout dialog mainLayout
   
   -- nastaveni timeru
+{-
   timer <- qTimer ()
   connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event conversationBox messageBox
   start timer (1000::Int)
-  
+-}  
   
   setWindowTitle dialog "Jabber client 3000"
   qshow dialog ()
@@ -153,6 +168,17 @@ on_timer_event cBox mBox this
  = do 
   append cBox "a"
   return ()
+
+
+on_conn_accepted :: QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
+on_conn_accepted labInfo userInput passwordInput serverInput connDialog this
+  = do
+    user <- text userInput ()
+    if user == "michalek"
+      then do hide connDialog ()
+      else do setText labInfo "Login incorrect"
+
+    return ()
 
 {-
  UZITECNY FICURKY
