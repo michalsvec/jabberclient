@@ -25,7 +25,7 @@ import XMPPMonad
 --import Data.IORef
 
 import TCPConnection 
-import XMPPConnection hiding ( closeConnection )
+import XMPPConnection hiding ( closeConnection, getStanzas )
 import qualified XMPPConnection
 
 import XMPPXML
@@ -268,4 +268,8 @@ async_rcv :: TCPConnection -> IO ()
 async_rcv c = do
   getStanzas c
   return ()
+
+getStanzas :: TCPConnection -> IO [XMLElem]
+getStanzas c = XMPPConnection.getStanzas c
+
 
