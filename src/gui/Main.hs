@@ -155,20 +155,14 @@ main = do
   retDialogCode <- exec connDialog ()
   if retDialogCode == 0
     then exitWith (ExitFailure 1)
-    else print ""--sendPresence connection
-
-  connection <- connectToServer server
-  login connection username server passwd
+    else print "nic slepa vetev"
+       
+  connection <- getVarTCPConnection envRefConn "connection"
 
   sendPresence connection
 
-  res <- result connDialog ()
-
-  print res
-
-
-
   ok <- qApplicationExec ()
+--  return ()
   closeConnection connection 
 
 
@@ -187,13 +181,25 @@ on_timer_event cBox mBox this
 
 
 on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
-on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this
-  = do
+on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this = do
+{-    server <- text serverInput ()
+    connection <- connectToServer server `catch` (\e -> do let fuck = True ) -- (\e -> do setText labInfo $ "Login incorrect " ++ show e)
+    prin
+    return ()
+-}
+  connection <- connectToServer server
+  login connection username server passwd
+  setVarTCPConnection envRefConn "connection" connection
+  accept connDialog ()
+
+
+{-    
     user <- text userInput ()
     if user == "michalek"
       then do hide connDialog ()
       else do setText labInfo "Login incorrect"
-    accept connDialog ()
+-}        
+--    accept connDialog ()
 
 on_conn_rejected :: QDialog () -> MyQPushButton -> IO ()
 on_conn_rejected connDialog this = do
