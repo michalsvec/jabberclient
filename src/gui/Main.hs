@@ -40,6 +40,8 @@ import System.Exit
 
 import XMPPLight
 
+import Global
+
 type MyQDialog = QWidgetSc (CMyQDialog)
 data CMyQDialog = CMyQDialog
 
@@ -91,8 +93,10 @@ main = do
   -- v pripade potvrzeni vola funkci, ktera se prihlasi a zmizi okenko
   acceptButton <- myQPushButton $ "Connect me, bro"
   rejectButton <- myQPushButton $ "Piss off"
-  
-  connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted labInfo userInput passwordInput serverInput connDialog
+
+  envRefConn <- nullEnvTCPConnection
+
+  connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
   connectSlot rejectButton "clicked()" rejectButton "click()" $ on_conn_rejected connDialog
 
   addWidget connLayout (acceptButton, 5::Int, 0::Int, 1::Int, 1::Int)
@@ -182,8 +186,8 @@ on_timer_event cBox mBox this
   return ()
 
 
-on_conn_accepted :: QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
-on_conn_accepted labInfo userInput passwordInput serverInput connDialog this
+on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
+on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this
   = do
     user <- text userInput ()
     if user == "michalek"
