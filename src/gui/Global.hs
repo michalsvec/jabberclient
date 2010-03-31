@@ -80,14 +80,14 @@ getVarInt envRef var = do
 -- globalni prommenna pro ulozeni aktualniho kontaktu ( ten se kterym je aktivni chat )
 -- -------------------------------------------------------------------------------------
 
-type EnvCurrentClient = IORef [(String, IORef String)]
+type EnvCurrentContact = IORef [(String, IORef String)]
 
 -- empty environment
-nullEnvCurrentClient :: IO EnvCurrentClient
-nullEnvCurrentClient = newIORef []
+nullEnvCurrentContact :: IO EnvCurrentContact
+nullEnvCurrentContact = newIORef []
 
-setVarEnvCurrentClient :: EnvCurrentClient -> String -> String -> IO String
-setVarEnvCurrentClient envRef var value = do 
+setVarEnvCurrentContact :: EnvCurrentContact -> String -> String -> IO String
+setVarEnvCurrentContact envRef var value = do 
     -- read the ref to the environment
     env <- liftIO $ readIORef envRef
     -- lookup the value in the environment
@@ -104,15 +104,50 @@ setVarEnvCurrentClient envRef var value = do
                     writeIORef envRef ((var, valueRef) : env)
                     return value
 
-getVarEnvCurrentClient :: EnvCurrentClient -> String -> IO String
-getVarEnvCurrentClient envRef var = do
+getVarEnvCurrentContact :: EnvCurrentContact -> String -> IO String
+getVarEnvCurrentContact envRef var = do
     env <- liftIO $ readIORef envRef
     case (lookup var env) of
         (Just ref) -> do 
                         val <- readIORef ref
                         return val
                         
-                        
 -- ------------------------------------------------------------------------------
 
--- GLOBALNI PROMENNE ---------------------------------------
+-- -------------------------------------------------------------------------------------             
+-- globalni prommenna pro ulozeni seznamu kontaktu
+-- -------------------------------------------------------------------------------------
+
+type EnvContactList = IORef [(String, IORef (String))]
+
+-- empty environment
+nullEnvContactList :: IO EnvContactList
+nullEnvContactList = newIORef []
+
+setVarEnvContactList :: EnvContactList -> String -> String -> IO String
+setVarEnvContactList envRef var value = do 
+    -- read the ref to the environment
+    env <- liftIO $ readIORef envRef
+    -- lookup the value in the environment
+    case (lookup var env) of
+        -- we have a reference
+        (Just ref) -> do
+                        writeIORef ref value
+                        return value
+        -- this variable doesn't exist in the environment
+        Nothing -> do
+                    -- create a new reference
+                    valueRef <- newIORef value
+                    -- expand the environent and write to the ref
+                    writeIORef envRef ((var, valueRef) : env)
+                    return value
+
+getVarEnvContactList :: EnvContactList -> String -> IO String
+getVarEnvContactList envRef var = do
+    env <- liftIO $ readIORef envRef
+    case (lookup var env) of
+        (Just ref) -> do 
+                        val <- readIORef ref
+                        return val
+
+-- GLOBALNI PROMENNE ------------------------------------------------------------
