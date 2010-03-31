@@ -1,4 +1,5 @@
 module TCPConnection ( TCPConnection
+                     , newStream
                      , openStream
                      , getStreamStart
                      , parseBuffered
@@ -14,7 +15,10 @@ import XMLParse
 import XMPPConnection
 
 -- |An XMPP connection over TCP.
-data TCPConnection = TCPConnection Handle (IORef String)
+data TCPConnection = TCPConnection Handle (IORef String) | EmptyTCPConnection () ()
+
+newStream :: IO TCPConnection
+newStream = return $ EmptyTCPConnection () ()
 
 -- |Open a TCP connection to the named server, port 5222, and send a
 -- stream header.  This should really check SRV records.
