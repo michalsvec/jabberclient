@@ -23,6 +23,7 @@ OUTPROJFILE = $(OUTDIR)/jabclient
 SRCDIR = ./src
 #SRCFILES = ./test.hs
 SRCFILES = $(SRCDIR)/gui/Main.hs \
+	$(SRCDIR)/gui/Global.hs \
 	$(SRCDIR)/xmpp/*.hs
 
 # Project compilation

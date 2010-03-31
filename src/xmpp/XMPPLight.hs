@@ -42,6 +42,9 @@ import Maybe
 --import Qtc.ClassTypes.Core
 import Qtc.ClassTypes.Gui
 
+--newConnection :: IO TCPConnection
+--newConnection = return TCPConnection
+
 connectToServer :: String -> IO TCPConnection
 connectToServer server = do
   c <- openStream server
