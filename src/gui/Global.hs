@@ -86,12 +86,12 @@ type EnvCurrentContact = IORef [(String, IORef String)]
 nullEnvCurrentContact :: IO EnvCurrentContact
 nullEnvCurrentContact = newIORef []
 
-setVarEnvCurrentContact :: EnvCurrentContact -> String -> String -> IO String
-setVarEnvCurrentContact envRef var value = do 
+setVarCurrentContact :: EnvCurrentContact -> String -> IO String
+setVarCurrentContact envRef value = do 
     -- read the ref to the environment
     env <- liftIO $ readIORef envRef
     -- lookup the value in the environment
-    case (lookup var env) of
+    case (lookup "current_contant" env) of
         -- we have a reference
         (Just ref) -> do
                         writeIORef ref value
@@ -101,12 +101,13 @@ setVarEnvCurrentContact envRef var value = do
                     -- create a new reference
                     valueRef <- newIORef value
                     -- expand the environent and write to the ref
-                    writeIORef envRef ((var, valueRef) : env)
+                    writeIORef envRef (("current_contant", valueRef) : env)
                     return value
 
-getVarEnvCurrentContact :: EnvCurrentContact -> String -> IO String
-getVarEnvCurrentContact envRef var = do
+getVarCurrentContact :: EnvCurrentContact -> IO String
+getVarCurrentContact envRef = do
     env <- liftIO $ readIORef envRef
+    let var = "current_contant"
     case (lookup var env) of
         (Just ref) -> do 
                         val <- readIORef ref
