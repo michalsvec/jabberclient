@@ -2,7 +2,7 @@
 -- Project: jabclient
 -- Author:  jirka
 --
-module Globalt where
+module Global where
 
 -- GLOBALNI PROMENNE ---------------------------------------
 
