@@ -176,9 +176,10 @@ main = do
   connection <- getVarTCPConnection envRefConn "connection"
 
   -- nacteni kontaktu do contact listu
-  mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
+  addItems contactList (["jirik", "misa", "paja"])
+  --mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
   --nastaveni signalu na oznaceni prvku
-  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked conversationBox
+  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked conversationBox contactList
 
   -- odeslani infa o tom ze jsem se pripojil
   sendPresence connection
@@ -194,10 +195,12 @@ main = do
   closeConnection connection 
 
 
-on_contact_clicked :: QTextEdit() -> QDialog() -> QListWidgetItem() -> IO ()
-on_contact_clicked cBox this item
+on_contact_clicked :: QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
+on_contact_clicked cBox list this item
  = do
   append cBox "tralala"
+  sss <- currentRow list ()
+  print sss
   return ()
 
 
