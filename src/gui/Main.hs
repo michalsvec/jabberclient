@@ -104,6 +104,7 @@ main = do
 
   envRefConn <- nullEnvTCPConnection
   envCurrentContactRef <- nullEnvCurrentContact
+  envContactList <- nullEnvContactList
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
   connectSlot rejectButton "clicked()" rejectButton "click()" $ on_conn_rejected connDialog
@@ -177,9 +178,13 @@ main = do
 
   -- nacteni kontaktu do contact listu
   addItems contactList (["jirik", "misa", "paja"])
+  setVarEnvContactList envContactList "0" "jirik-jid"
+  setVarEnvContactList envContactList "1" "misa-jid"
+  setVarEnvContactList envContactList "2" "paja-jid"
+    
   --mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
   --nastaveni signalu na oznaceni prvku
-  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked conversationBox contactList
+  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList conversationBox contactList
 
   -- odeslani infa o tom ze jsem se pripojil
   sendPresence connection
@@ -195,11 +200,14 @@ main = do
   closeConnection connection 
 
 
-on_contact_clicked :: QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
-on_contact_clicked cBox list this item
+on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
+on_contact_clicked envCurrentContact envContactList cBox list this item
  = do
   append cBox "tralala"
   sss <- currentRow list ()
+  current_contact_jid <- getVarEnvContactList envContactList ( show sss )
+  print $ show current_contact_jid
+  setVarCurrentContact envCurrentContact current_contact_jid
   print sss
   return ()
 
