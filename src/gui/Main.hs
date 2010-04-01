@@ -117,7 +117,7 @@ main = do
 	-- ------------------------------------------------------------------------------------------------------------------------------
   -- HLAVNI PROGRAM! 
   
-    setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
+  setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
   
   -- Definice jednotlivych widgetu v programu
   -- tlacitko
@@ -178,10 +178,6 @@ main = do
   -- nacteni kontaktu do contact listu
   mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
   --nastaveni signalu na oznaceni prvku
-  -- shity
-  --mouseDoubleClickEvent contactList (on_contact_clicked contactList conversationBox messageBox)::QMouseEvent
-  --connectSlot contactButton "clicked()" contactButton "on_contact_clicked()" $ on_contact_clicked contactList conversationBox messageBox
-
   connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked conversationBox
 
   -- odeslani infa o tom ze jsem se pripojil
@@ -196,22 +192,12 @@ main = do
   ok <- qApplicationExec ()
 --  return ()
   closeConnection connection 
-{-
-tmpShit :: [QListWidgetItem] -> QTextEdit() -> IO ()
-tmpShit x cBox
- = do
-  label <- text x ()
-  append cBox label
-  tmpShit x cBox
-  return ()
--}
+
 
 on_contact_clicked :: QTextEdit() -> QDialog() -> QListWidgetItem() -> IO ()
 on_contact_clicked cBox this item
  = do
   append cBox "tralala"
-
-
   return ()
 
 
