@@ -142,8 +142,8 @@ getContactList c = do
         where
             getContact :: [XMLElem] -> [(String,String)] -> [(String,String)]
             getContact (x:xs) list = do
-                                        let name = fromMaybe "--err:name--" (getAttr "name" x)
                                         let jid = fromMaybe "--err:jid--" (getAttr "jid" x)
+                                        let name = fromMaybe jid (getAttr "name" x)
                                         getContact xs list ++ [ (name,jid) ]
             getContact [] list = list
 
