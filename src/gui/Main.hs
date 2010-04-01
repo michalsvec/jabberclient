@@ -40,6 +40,9 @@ import Qtc.Enums.Gui.QDialog --eRejected :: DialogCode eAccepted :: DialogCode
 import System.Exit
 
 import XMPPLight
+import XMPPXML
+
+import Maybe
 
 import Global
 
@@ -67,6 +70,10 @@ main = do
   app <- qApplication ()
   dialog <- myQDialog
   mb <- qMessageBox dialog
+
+  envRefConn <- nullEnvTCPConnection
+  envCurrentContactRef <- nullEnvCurrentContact
+  envTCPConnection <- nullEnvTCPConnection
 
   -- zobrazeni uvodniho dialogu pro pripojeni na server
   connDialog <- qDialog dialog
@@ -109,6 +116,8 @@ main = do
 
 	-- ------------------------------------------------------------------------------------------------------------------------------
   -- HLAVNI PROGRAM! 
+  
+    setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
   
   -- Definice jednotlivych widgetu v programu
   -- tlacitko
@@ -178,6 +187,12 @@ main = do
   -- odeslani infa o tom ze jsem se pripojil
   sendPresence connection
 
+  -- nastaveni timeru
+
+  timer <- qTimer ()
+  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef conversationBox
+  start timer (1000::Int)
+
   ok <- qApplicationExec ()
 --  return ()
   closeConnection connection 
@@ -221,11 +236,41 @@ on_button_clicked envRefConn envRef cBox mBox this
   return ()
 
 
-on_timer_event :: QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
-on_timer_event cBox mBox this
- = do 
-  append cBox "a"
-  return ()
+on_timer_event :: EnvTCPConnection -> EnvCurrentContact -> QTextEdit () -> MyQPushButton -> IO ()
+on_timer_event envRefConn envRef cBox this
+   = do
+    current_contact_jid <- getVarCurrentContact envRef
+    tcp_connection <- getVarTCPConnection envRefConn "connection"
+    stanzas <- getStanzas tcp_connection
+    print $ "Current contact jid:" ++ current_contact_jid
+    processStanza stanzas current_contact_jid
+      where 
+      processStanza (x:xs) current_contact_jid
+                 | isMessage x = do
+                                     print $ show x
+                                     let sw_from = isFrom current_contact_jid x
+                                     print $ "is from current:" ++ (show sw_from)
+                                     -- jedna se o zpravu
+                                     -- potreba vlozit nekam kde si toho uzivatel vsimne
+                                     let msg  = fromMaybe "---" (getMessageBody x)
+                                     -- print $ (" message stanza received: " ++ msg ++ "]...")
+                                     append cBox msg
+                                     processStanza xs current_contact_jid
+                 | isPresence x      = do
+                                     -- jedna se o presence zpravu
+                                     -- do kontakt listu poznacim se se uzivatel prihlasil
+                                     print $ " presence stanza received..."
+                                     processStanza xs current_contact_jid
+                 | otherwise     = do
+                                     -- jedna se o iq stanzu
+                                     -- nevim co s tim 
+                                     print $ " some stanza received..."
+                                     processStanza xs current_contact_jid
+      processStanza [] _ = do 
+                             print $ " list of stanzas processed..." 
+
+
+
 
 
 on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()

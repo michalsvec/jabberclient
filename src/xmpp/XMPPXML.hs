@@ -22,6 +22,7 @@ import Stanzas hiding (
                )
 import qualified Stanzas
 import XMLParse
+import Maybe
 
 type StanzaPredicate = (XMLElem -> Bool)
 
@@ -73,7 +74,13 @@ isChat = Stanzas.isChat
 
 -- |Return true if the stanza is from the given JID.
 isFrom :: String -> StanzaPredicate
-isFrom = Stanzas.isFrom 
+isFrom from (XML a b c ) = from == (getRealJID $ fromMaybe "" ( lookup "from" b ))
+                                
+getRealJID :: String -> String
+getRealJID (x:xs)
+                | x /= '/'  = [x] ++ getRealJID xs
+                | otherwise = ""
+getRealJID [] = ""
 
 -- |Return true if the stanza is an IQ stanza in the given namespace.
 iqXmlns :: String -> StanzaPredicate
