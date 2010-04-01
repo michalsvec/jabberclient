@@ -34,6 +34,7 @@ import Qtc.Gui.QListView
 import Qtc.Core.QTimer
 import Qtc.Enums.Gui.QDialogButtonBox
 import Qtc.Gui.QDialogButtonBox
+import Qtc.Gui.QListWidget
 
 import Qtc.Enums.Gui.QDialog --eRejected :: DialogCode eAccepted :: DialogCode
 import System.Exit
@@ -95,6 +96,7 @@ main = do
   rejectButton <- myQPushButton $ "Piss off"
 
   envRefConn <- nullEnvTCPConnection
+  envCurrentContactRef <- nullEnvCurrentContact
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
   connectSlot rejectButton "clicked()" rejectButton "click()" $ on_conn_rejected connDialog
@@ -104,11 +106,14 @@ main = do
   
   setLayout connDialog connLayout
 
+
+	-- ------------------------------------------------------------------------------------------------------------------------------
   -- HLAVNI PROGRAM! 
   
   -- Definice jednotlivych widgetu v programu
   -- tlacitko
   sendButton <- myQPushButton $ "Odeslat"
+  contactButton <- myQPushButton $ "Kontaktovat"
   messageBox <- qLineEdit ()
   setText messageBox "tady pises zpravy bracho"
   conversationBox <- qTextEdit ()
@@ -116,7 +121,7 @@ main = do
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
-  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked conversationBox messageBox
+  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
 
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
@@ -129,13 +134,14 @@ main = do
   connectSlot exitAction "triggered()" app "quit()" ()
   setMenuBar mainLayout menuBar
 
-  contactList <- qListView ()
+  contactList <- qListWidget ()
 
   -- pridani vsech widgetu do aplikace
   addWidget mainLayout (conversationBox, 0::Int, 0::Int, 1::Int, 2::Int)
   addWidget mainLayout (messageBox, 1::Int, 0::Int, 1::Int, 2::Int)
   addWidget mainLayout (sendButton, 1::Int, 1::Int, 1::Int, 1::Int)
-  addWidget mainLayout (contactList, 0::Int, 2::Int, 2::Int, 1::Int)
+  addWidget mainLayout (contactList, 0::Int, 2::Int, 1::Int, 1::Int)
+  addWidget mainLayout (contactButton, 1::Int, 2::Int, 1::Int, 1::Int)
 
   setColumnMinimumWidth mainLayout (0::Int, 300::Int)
   
@@ -156,22 +162,64 @@ main = do
   if retDialogCode == 0
     then exitWith (ExitFailure 1)
     else print "nic slepa vetev"
-       
+
+  -- vytvoreni pripojeni na server       
   connection <- getVarTCPConnection envRefConn "connection"
 
+  -- nacteni kontaktu do contact listu
+  mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
+  --nastaveni signalu na oznaceni prvku
+  -- shity
+  --mouseDoubleClickEvent contactList (on_contact_clicked contactList conversationBox messageBox)::QMouseEvent
+  --connectSlot contactButton "clicked()" contactButton "on_contact_clicked()" $ on_contact_clicked contactList conversationBox messageBox
+
+  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked conversationBox
+
+  -- odeslani infa o tom ze jsem se pripojil
   sendPresence connection
 
   ok <- qApplicationExec ()
 --  return ()
   closeConnection connection 
+{-
+tmpShit :: [QListWidgetItem] -> QTextEdit() -> IO ()
+tmpShit x cBox
+ = do
+  label <- text x ()
+  append cBox label
+  tmpShit x cBox
+  return ()
+-}
+
+on_contact_clicked :: QTextEdit() -> QDialog() -> QListWidgetItem() -> IO ()
+on_contact_clicked cBox this item
+ = do
+  append cBox "tralala"
 
 
-on_button_clicked :: QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
-on_button_clicked cBox mBox this
+  return ()
+
+
+mapContactList :: QListWidget () -> String -> IO ()
+mapContactList contactList jid
+  = do
+    --user <- jid
+    addItem contactList jid
+
+on_button_clicked :: EnvTCPConnection -> EnvCurrentContact -> QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
+on_button_clicked envRefConn envRef cBox mBox this 
  = do
   msg <- text mBox ()
   append cBox msg
+  setText mBox ""
+  -- vytahnu si aktualni kontakt se kterym si pisu
+  current_contact_jid <- getVarCurrentContact envRef
+  -- vytahnu si aktualni pripojeni 
+  tcp_connection <- getVarTCPConnection envRefConn "connection"
+  -- zpravu mu odeslu
+  sendMessage tcp_connection current_contact_jid msg
   return ()
+
 
 on_timer_event :: QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
 on_timer_event cBox mBox this
