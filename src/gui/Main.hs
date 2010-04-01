@@ -176,18 +176,18 @@ main = do
   -- vytvoreni pripojeni na server       
   connection <- getVarTCPConnection envRefConn "connection"
 
+  -- odeslani infa o tom ze jsem se pripojil
+  sendPresence connection
+
   -- nacteni kontaktu do contact listu
-  addItems contactList (["jirik", "misa", "paja"])
-  setVarEnvContactList envContactList "0" "jirik-jid"
-  setVarEnvContactList envContactList "1" "misa-jid"
-  setVarEnvContactList envContactList "2" "paja-jid"
-    
+  jid_name_list <- getContactList connection
+  setup_contact_list envContactList jid_name_list contactList
+      
   --mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
   --nastaveni signalu na oznaceni prvku
   connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList conversationBox contactList
 
-  -- odeslani infa o tom ze jsem se pripojil
-  sendPresence connection
+
 
   -- nastaveni timeru
 
@@ -199,6 +199,16 @@ main = do
 --  return ()
   closeConnection connection 
 
+setup_contact_list :: EnvContactList -> [(String,String)] -> QListWidget() -> IO ()
+setup_contact_list envContactList jid_name_list list
+  = do loop jid_name_list 0
+    where 
+        loop :: [(String,String)] -> Int -> IO ()
+        loop ((a, b):xs) i = do 
+                              setVarEnvContactList envContactList (show i) b
+                              addItem list a
+                              loop xs (i+1)
+        loop [] _ = return ()
 
 on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
 on_contact_clicked envCurrentContact envContactList cBox list this item
