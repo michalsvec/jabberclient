@@ -132,7 +132,7 @@ main = do
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
   connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
-
+  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
 
