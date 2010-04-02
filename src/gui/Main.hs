@@ -127,7 +127,7 @@ main = do
 	-- ------------------------------------------------------------------------------------------------------------------------------
   -- HLAVNI PROGRAM! 
   
-  setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
+  -- setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
   
   -- Definice jednotlivych widgetu v programu
   sendButton <- myQPushButton $ "Odeslat"
