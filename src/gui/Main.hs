@@ -67,11 +67,11 @@ myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
 server :: [Char]
-server   = "njs.netlab.cz"
+server   = "jabber.cz"
 username :: [Char]
-username = "jirkamelich"
+username = "michy"
 passwd :: [Char]
-passwd = "abx4C82abx4C82"
+passwd = "password"
 
 main :: IO ()
 main = do
@@ -309,7 +309,9 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                      -- potreba vlozit nekam kde si toho uzivatel vsimne
                                      let msg  = fromMaybe "---" (getMessageBody x)
                                      -- print $ (" message stanza received: " ++ msg ++ "]...")
-                                     append cBox (current_contact_jid ++ " >> " ++ msg )
+                                     item_count <- count contactList ()
+                                     index <- getContactIndex evnContactList x item_count 0
+                                     append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ current_contact_jid ++ "</b></font> >> " ++ msg )
                                      processStanza xs current_contact_jid
                  | isPresence x = do
                                      -- jedna se o presence zpravu
@@ -420,6 +422,14 @@ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDial
 on_conn_rejected :: QDialog () -> MyQPushButton -> IO ()
 on_conn_rejected connDialog this = do
   reject connDialog ()
+
+
+
+get_color_from_array :: Int -> String
+get_color_from_array index
+ = do
+  let colors = ["#6B6C42","#6F613C","#657F7C","#FF5864","#DE7E0E","#B4C533","#ABACC1","#110757","#3C5B16","#660C2B","#567184","#C9D411","#D3A67C","#38176A","#877D95","#E17709"]
+  (colors !! (index `mod` (length colors)))
 
 {-
  UZITECNY FICURKY
