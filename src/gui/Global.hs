@@ -7,7 +7,7 @@ module Global where
 -- GLOBALNI PROMENNE ---------------------------------------
 
 -- pro EnvInt typ
-import System.Environment
+import System.Environment()
 import Data.IORef
 import Control.Monad.State
 
@@ -76,6 +76,8 @@ getVarInt envRef var = do
         (Just ref) -> do 
                         val <- readIORef ref
                         return val
+        Nothing -> return 0                        
+
 -- -------------------------------------------------------------------------------------             
 -- globalni prommenna pro ulozeni aktualniho kontaktu ( ten se kterym je aktivni chat )
 -- -------------------------------------------------------------------------------------

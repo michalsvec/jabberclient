@@ -1,46 +1,22 @@
 --
 -- Project: jabclient
--- Author:  pavel Srb
+-- Author:  Pavel Srb
 --
 
--- | Main project module.
 module XMPPLight where
 
 import Control.Concurrent
---import Network
---import IO
-
-{-
-import Network
-import System.IO
-import Data.IORef
-import XMPP
-import XMPPMonad
--}
-
---import Control.Monad
-
-import Network
-import System.IO
-import Data.IORef
-
 import TCPConnection 
 import XMPPConnection hiding ( closeConnection, getStanzas )
 import qualified XMPPConnection
-
-import XMPPXML
-
---import XMPP
-
 import Control.Monad.State
 import XMLParse
 import System.Random
 import Maybe
 
---import XMPPMonad hiding ( sendStanza )
+import XMPPXML
 
---import Qtc.ClassTypes.Core
-import Qtc.ClassTypes.Gui
+
 
 connectToServer :: String -> IO TCPConnection
 connectToServer server = do
@@ -75,28 +51,16 @@ login c server username password = do
                                              XML "resource" []
                                                      [CData "hsXmpp"]]]
       case getAttr "type" response' of
-        Just "result" -> putStrLn "Authentication succeeded"
+        Just "result" -> return () --putStrLn "Authentication succeeded"
         _ -> ioError $ userError "Authentication failed"
 
 
-
--- |Send an IQ request and wait for the response, with blocking other activity.
--- JID of recipient
--- Type of IQ, either \"get\" or \"set\"
--- Payload elements
--- Response stanza
 sendIqWait :: TCPConnection -> String -> String -> [XMLElem] -> IO XMLElem
 sendIqWait c to iqtype payload = do
   iqid <- sendIq c to iqtype payload
   waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==iqid))
---  return $ fromMaybe (XML "iq" [] []) xxx --  return $ XML "iq" [] []
 
 
--- |Send an IQ request, returning the randomly generated ID.
--- ^JID of recipient
--- ^Type of IQ, either \"get\" or \"set\"
--- ^Payload elements
--- ^ID of sent stanza
 sendIq :: TCPConnection -> String -> String -> [XMLElem] -> IO String
 sendIq c to iqtype payload = do
   iqid <- randomIO::IO Int
@@ -107,7 +71,7 @@ sendIq c to iqtype payload = do
                      payload
   return $ show iqid
 
-waitForStanza :: TCPConnection -> Int -> (XMLElem -> Bool) -> IO XMLElem --(Maybe XMLElem)
+waitForStanza :: TCPConnection -> Int -> (XMLElem -> Bool) -> IO XMLElem
 waitForStanza c tryout predic = do
   if tryout < 1
     then do ioError $ userError "authentication: timeout reachet - no response from server"
@@ -115,14 +79,11 @@ waitForStanza c tryout predic = do
             matchPred allStanzas
             where matchPred (stanza:stanzas) = do
                     if predic stanza
-                      then return stanza -- $ Just stanza
+                      then return stanza 
                       else matchPred stanzas
                   matchPred ([]) = do
                     threadDelay (10000)
                     waitForStanza c (tryout-1) predic
--- jestli to dojde sem znamena to ze sme cekali moc malo 
--- stalo by zato znova pockat :D aspon este malou chvili
--- -}
 
 
 getContactList :: TCPConnection -> IO [(String,String)]
@@ -132,10 +93,10 @@ getContactList c = do
                        [("type", "get"),
                         ("id", show iqid)]
                        [XML "query" [("xmlns", "jabber:iq:roster")] []]
-    (XML a b c) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
-    let (XML d e f) = (c!!0)
-    print $ show f
-    return $ getContact f []
+    (XML _ _ body) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
+    let (XML _ _ body2) = (body!!0)
+    print $ show body2
+    return $ getContact body2 []
         where
             getContact :: [XMLElem] -> [(String,String)] -> [(String,String)]
             getContact (x:xs) list = do

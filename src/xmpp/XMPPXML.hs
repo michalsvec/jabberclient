@@ -1,9 +1,9 @@
 --
 -- Project: jabclient
--- Author:  Jirka a Pavel
+-- Author:  Jirka Melichar a Pavel Srb
 --
 
--- | Main project module.
+
 module XMPPXML where
 
 import Stanzas hiding (
@@ -52,7 +52,6 @@ getMessageBody stanza = Stanzas.getMessageBody stanza
 -- |Conjunction (\"and\") of two predicates.
 conj :: (a -> Bool) -> (a -> Bool) -> (a -> Bool)
 conj = Stanzas.conj
-
 
 --- The three basic stanza types ---
 

@@ -2,9 +2,10 @@
 -----------------------------------------------------------------------------
 {-| Program   : client.hs
     Copyright : tvrdaci 2010
+    Authors   : Michal Svec, Jiri Melichar, Pavel Srb
     Project   : FPR
-    Version   : 0
-    Modified  : non-stop
+    Version   : 0.0.3
+    Modified  : 02.04.2010
 --}
 ------------------------------------------------------------------------------
 
@@ -67,11 +68,11 @@ myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
 server :: [Char]
-server   = "njs.netlab.cz"
+server   = "jabbim.cz"
 username :: [Char]
-username = "jirkamelich"
+username = "french"
 passwd :: [Char]
-passwd = "abx4C82abx4C82"
+passwd = "J*7R*g^3;"
 
 main :: IO ()
 main = do
@@ -130,7 +131,7 @@ main = do
   -- setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
   
   -- Definice jednotlivych widgetu v programu
-  sendButton <- myQPushButton $ "Odeslat"
+  sendButton <- myQPushButton $ "Send"
   messageBox <- qLineEdit ()
   --setText messageBox "tady pises zpravy bracho"
   conversationBox <- qTextEdit ()
@@ -194,7 +195,7 @@ main = do
   retDialogCode <- exec connDialog ()
   if retDialogCode == 0
     then exitWith (ExitFailure 1)
-    else print "nic slepa vetev"
+    else return ()
 
   -- vytvoreni pripojeni na server       
   connection <- getVarTCPConnection envRefConn "connection"
@@ -219,14 +220,10 @@ main = do
   closeConnection connection 
 
 
-
-
-
 on_about_clicked :: MyQPushButton -> IO ()
 on_about_clicked layout
  =do
   -- help -> abou
-  print "aboutclicked"
   helpDialog <- myQDialog
   labAbout <- qLabel "<center><b>jabber client 3000</b><br><br>Jiří Melichar, xmelic04<br>Pavel Srb, xsrbpa00<br>Michal Švec, xsvecm07<br><br>FIT VUT<br>FPR (c)2010</center>"
   helpLayout <- qHBoxLayout ()
@@ -238,17 +235,19 @@ on_about_clicked layout
 
 setup_contact_list :: EnvContactList -> [(String,String)] -> QListWidget() -> IO ()
 setup_contact_list envContactList jid_name_list list
-  = do  print $ show jid_name_list
+  = do  --print $ show jid_name_list
         loop jid_name_list 0
         where 
             loop :: [(String,String)] -> Int -> IO ()
             loop ((a, b):xs) i = do 
                               setVarEnvContactList envContactList (show i) b
                               setVarEnvContactList envContactList ((show i)++"n") a
+                              {-
                               print "JID:"
                               print b
                               print "NAME:"
                               print a 
+                              -}
                               addItem list a
                               loop xs (i+1)
             loop [] _ = return ()
@@ -256,13 +255,12 @@ setup_contact_list envContactList jid_name_list list
 on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QLabel() -> QLineEdit () -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
 on_contact_clicked envCurrentContact envContactList current_contact_label mBox cBox list this item
  = do
-  sss <- currentRow list ()
-  current_contact_jid <- getVarEnvContactList envContactList ( show sss )
-  current_contact_name <- getVarEnvContactList envContactList ((show sss)++"n")
+  curIndex <- currentRow list ()
+  current_contact_jid <- getVarEnvContactList envContactList ( show curIndex )
+  current_contact_name <- getVarEnvContactList envContactList ((show curIndex)++"n")
   setText current_contact_label current_contact_name
   setVarCurrentContact envCurrentContact current_contact_jid
   setFocus mBox ()
-  print sss
   return ()
 
 
@@ -300,18 +298,20 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
     current_contact_jid <- getVarCurrentContact envRef
     tcp_connection <- getVarTCPConnection envRefConn "connection"
     stanzas <- getStanzas tcp_connection
+    {-
     print $ show stanzas
     print ""
     print ""    
     print $ "Current contact jid:" ++ current_contact_jid
     print ""
+    -}
     processStanza stanzas current_contact_jid
       where 
       processStanza (x:xs) current_contact_jid
                  | isMessage x = do
-                                     print $ show x
+                                     --print $ show x
                                      let sw_from = isFrom current_contact_jid x
-                                     print $ "is from current:" ++ (show sw_from)
+                                     --print $ "is from current:" ++ (show sw_from)
                                      -- jedna se o zpravu
                                      -- potreba vlozit nekam kde si toho uzivatel vsimne
                                      let msg  = fromMaybe "---" (getMessageBody x)
@@ -329,7 +329,7 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                      item_count <- count contactList ()
                                      -- presenceType <- show "unavailable"                                     
                                      index <- getContactIndex evnContactList x item_count 0
-                                     print $ "Index:" ++ ( show index )
+                                     --print $ "Index:" ++ ( show index )
                                      let presenceType = getType x
                                      
                                      if ( index >= 0 ) 
@@ -345,15 +345,15 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                         else do 
                                             setBold typeFont True 
                                                                           
-                                     print $ "\n\n presence stanza received... \n\n"
+                                     --print $ "\n\n presence stanza received... \n\n"
                                      processStanza xs current_contact_jid
                  | otherwise = do
                                      -- jedna se o iq stanzu
                                      -- nevim co s tim 
-                                     print $ " some stanza received..."
+                                     --print $ " some stanza received..."
                                      processStanza xs current_contact_jid
-      processStanza [] _ = do 
-                             print $ " list of stanzas processed..." 
+      processStanza [] _ = do return ()
+                             --print $ " list of stanzas processed..." 
 
 
 getContactIndex :: EnvContactList -> XMLElem -> Int -> Int -> IO (Int)
@@ -366,8 +366,8 @@ getContactIndex envContactList stanza limit cur = do
                                                                 let is_from_cur_index = isFrom temp stanza
                                                                 if is_from_cur_index 
                                                                     then do
-                                                                        print "Temp:"
-                                                                        print temp
+                                                                        --print "Temp:"
+                                                                        --print temp
                                                                         return cur
                                                                     else do
                                                                         getContactIndex envContactList stanza limit (cur+1)
@@ -382,8 +382,8 @@ getContactIndex_from_jid envContactList jid limit cur = do
                                                                 temp <- getVarEnvContactList envContactList ( show cur )
                                                                 if temp == jid 
                                                                     then do
-                                                                        print "Temp:"
-                                                                        print temp
+                                                                        --print "Temp:"
+                                                                        --print temp
                                                                         return cur
                                                                     else do
                                                                         getContactIndex_from_jid envContactList jid limit (cur+1)
@@ -395,9 +395,9 @@ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDial
   loginErr <- nullEnvInt
   setVarInt loginErr "connect" 0
   setVarInt loginErr "auth" 0
-  --server   <- text serverInput ()
-  --username <- text userInput ()
-  --passwd   <- text passwordInput ()
+--  server   <- text serverInput ()
+--  username <- text userInput ()
+--  passwd   <- text passwordInput ()
   if (server == "" || username == "" || passwd == "")
     then do setText labInfo $ "Error: Each field is required"
             return () 
@@ -412,19 +412,12 @@ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDial
                         setText labInfo $ "Error: Bad login or password"
                         setVarInt loginErr "auth" 1
                         return ())
-                      code <- getVarInt loginErr "auth"
-                      if code == 1
+                      code2 <- getVarInt loginErr "auth"
+                      if code2 == 1
                         then return () 
                         else do setVarTCPConnection envRefConn "connection" connection
                                 accept connDialog ()
 
-{-    
-    user <- text userInput ()
-    if user == "michalek"
-      then do hide connDialog ()
-      else do setText labInfo "Login incorrect"
--}        
---    accept connDialog ()
 
 on_conn_rejected :: QDialog () -> MyQPushButton -> IO ()
 on_conn_rejected connDialog this = do
@@ -438,11 +431,3 @@ get_color_from_array index
   let colors = ["#6B6C42","#6F613C","#657F7C","#FF5864","#DE7E0E","#B4C533","#ABACC1","#110757","#3C5B16","#660C2B","#567184","#C9D411","#D3A67C","#38176A","#877D95","#E17709"]
   (colors !! (index `mod` (length colors)))
 
-{-
- UZITECNY FICURKY
- 
- addWidget do GridLayoutu
- void QGridLayout::addWidget ( QWidget * widget, int fromRow, int fromColumn, int rowSpan, int columnSpan, Qt::Alignment alignment = 0 )
-
-
--}
