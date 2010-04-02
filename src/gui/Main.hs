@@ -31,6 +31,9 @@ import Qtc.Gui.QWidget
 import Qtc.Gui.QPushButton
 import Qtc.Gui.QMessageBox
 import Qtc.Gui.QListView
+import Qtc.Gui.QFont
+import Qtc.Gui.QListWidgetItem
+import Qtc.Classes.Gui
 import Qtc.Core.QTimer
 import Qtc.Enums.Gui.QDialogButtonBox
 import Qtc.Gui.QDialogButtonBox
@@ -41,6 +44,8 @@ import System.Exit
 
 import XMPPLight
 import XMPPXML
+import XMLParse
+import Control.Monad.State
 
 import Maybe
 
@@ -192,7 +197,7 @@ main = do
   -- nastaveni timeru
 
   timer <- qTimer ()
-  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef conversationBox
+  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef envContactList conversationBox
   start timer (1000::Int)
 
   ok <- qApplicationExec ()
@@ -206,6 +211,7 @@ setup_contact_list envContactList jid_name_list list
         loop :: [(String,String)] -> Int -> IO ()
         loop ((a, b):xs) i = do 
                               setVarEnvContactList envContactList (show i) b
+                              setVarEnvContactList envContactList ((show i)++"n") a
                               addItem list a
                               loop xs (i+1)
         loop [] _ = return ()
@@ -243,13 +249,17 @@ on_button_clicked envRefConn envRef cBox mBox this
   return ()
 
 
-on_timer_event :: EnvTCPConnection -> EnvCurrentContact -> QTextEdit () -> MyQPushButton -> IO ()
-on_timer_event envRefConn envRef cBox this
+on_timer_event :: EnvTCPConnection -> EnvCurrentContact -> EnvContactList -> QTextEdit () -> QListWidget() -> MyQPushButton -> IO ()
+on_timer_event envRefConn envRef evnContactList cBox contactList this
    = do
     current_contact_jid <- getVarCurrentContact envRef
     tcp_connection <- getVarTCPConnection envRefConn "connection"
     stanzas <- getStanzas tcp_connection
+    print $ show stanzas
+    print ""
+    print ""    
     print $ "Current contact jid:" ++ current_contact_jid
+    print ""
     processStanza stanzas current_contact_jid
       where 
       processStanza (x:xs) current_contact_jid
@@ -263,12 +273,23 @@ on_timer_event envRefConn envRef cBox this
                                      -- print $ (" message stanza received: " ++ msg ++ "]...")
                                      append cBox msg
                                      processStanza xs current_contact_jid
-                 | isPresence x      = do
+                 | isPresence x = do
                                      -- jedna se o presence zpravu
                                      -- do kontakt listu poznacim se se uzivatel prihlasil
-                                     print $ " presence stanza received..."
+                                     boldFont <- qFont ()
+                                     
+                                     item_count <- count contactList ()
+                                     
+                                     let index = getContactIndex evnContactList x item_count 0
+                                     
+                                     listItem <- item contactList (0::Int)
+
+                                     setBold boldFont True 
+                                     setFont listItem boldFont
+                                     
+                                     print $ "\n\n presence stanza received... \n\n"
                                      processStanza xs current_contact_jid
-                 | otherwise     = do
+                 | otherwise = do
                                      -- jedna se o iq stanzu
                                      -- nevim co s tim 
                                      print $ " some stanza received..."
@@ -277,21 +298,65 @@ on_timer_event envRefConn envRef cBox this
                              print $ " list of stanzas processed..." 
 
 
+getContactIndex :: EnvContactList -> XMLElem -> Int -> Int -> IO (Int)
+getContactIndex envContactList stanza limit cur = do 
+                                                        if limit >= cur 
+                                                            then do 
+                                                                return (-1)
+                                                            else do 
+                                                                temp <- getVarEnvContactList envContactList ( show cur )
+                                                                let is_from_cur_index = isFrom temp stanza
+                                                                if is_from_cur_index 
+                                                                    then return cur
+                                                                    else do
+                                                                        getContactIndex envContactList stanza limit (cur+1)
+                                                        
+{-
+                                                | limit >= cur                      = return (-1)
+                                                | limit < cur && is_from_cur_index  = return cur
+                                                | otherwise                         = 
+                                                where 
+                                                        is_from_cur_index :: Bool
+                                                        is_from_cur_index = do 
+                                                                                
+-}
+{-
+= do
+                                                        is_from_cur_index <- 
+                                                        if limit>= cur
+                                                                return -1
+                                                        else 
+                                                                return getContactIndex envContactList stanza limit (cur+1)   
 
-
+-}
 
 on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
 on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this = do
-{-    server <- text serverInput ()
-    connection <- connectToServer server `catch` (\e -> do let fuck = True ) -- (\e -> do setText labInfo $ "Login incorrect " ++ show e)
-    prin
-    return ()
--}
-  connection <- connectToServer server
-  login connection username server passwd
-  setVarTCPConnection envRefConn "connection" connection
-  accept connDialog ()
-
+  loginErr <- nullEnvInt
+  setVarInt loginErr "connect" 0
+  setVarInt loginErr "auth" 0
+  server   <- text serverInput ()
+  username <- text userInput ()
+  passwd   <- text passwordInput ()
+  if (server == "" || username == "" || passwd == "")
+    then do setText labInfo $ "Error: Each field is required"
+            return () 
+    else do connection <- connectToServer server `catch` (\e -> do
+              setText labInfo $ "Error: Can't connect to server"
+              setVarInt loginErr "connect" 1
+              emptyConnection)
+            code <- getVarInt loginErr "connect"
+            if code == 1
+              then return () 
+              else do login connection server username passwd `catch` (\e -> do
+                        setText labInfo $ "Error: Bad login or password"
+                        setVarInt loginErr "auth" 1
+                        return ())
+                      code <- getVarInt loginErr "auth"
+                      if code == 1
+                        then return () 
+                        else do setVarTCPConnection envRefConn "connection" connection
+                                accept connDialog ()
 
 {-    
     user <- text userInput ()
