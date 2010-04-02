@@ -67,11 +67,11 @@ myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
 server :: [Char]
-server   = "jabber.cz"
+server   = "njs.netlab.cz"
 username :: [Char]
-username = "michy"
+username = "jirkamelich"
 passwd :: [Char]
-passwd = "password"
+passwd = "abx4C82abx4C82"
 
 main :: IO ()
 main = do
@@ -278,7 +278,7 @@ on_button_clicked envRefConn envRef cBox mBox this
   -- vytahnu si aktualni kontakt se kterym si pisu
   current_contact_jid <- getVarCurrentContact envRef
   msg <- text mBox ()
-  append cBox (current_contact_jid ++ " << " ++ msg )
+  append cBox ("<font color='#a1a1a1'>" ++ current_contact_jid ++ "</font> &lt;&lt; " ++ msg )
   setText mBox ""
   -- vytahnu si aktualni pripojeni 
   tcp_connection <- getVarTCPConnection envRefConn "connection"
@@ -311,7 +311,8 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                      -- print $ (" message stanza received: " ++ msg ++ "]...")
                                      item_count <- count contactList ()
                                      index <- getContactIndex evnContactList x item_count 0
-                                     append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ current_contact_jid ++ "</b></font> >> " ++ msg )
+                                     from_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
+                                     append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ from_contact ++ "</b></font> &gt;&gt; " ++ msg )
                                      processStanza xs current_contact_jid
                  | isPresence x = do
                                      -- jedna se o presence zpravu
