@@ -152,9 +152,8 @@ main = do
   addMenu menuBar fileMenu
   addMenu menuBar helpMenu
   connectSlot exitAction "triggered()" app "quit()" ()
-  connectSlot aboutAction "triggered()" sendButton "timerEvent()" $ on_about_clicked
+  connectSlot aboutAction "triggered()" dialog "click()" $ on_about_clicked
   setMenuBar mainLayout menuBar
-
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
 
@@ -220,10 +219,11 @@ on_about_clicked layout
   -- help -> abou
   print "aboutclicked"
   helpDialog <- myQDialog
-  labAbout <- qLabel "jabber client 3000\n srbpa,melic,svecm\n(c)2009"
+  labAbout <- qLabel "<center><b>jabber client 3000</b><br><br>Jiří Melichar, xmelic04<br>Pavel Srb, xsrbpa00<br>Michal Švec, xsvecm07<br><br>FIT VUT<br>FPR (c)2009</center>"
   helpLayout <- qHBoxLayout ()
   addWidget helpLayout labAbout
   setLayout helpDialog helpLayout
+  resize helpDialog (300::Int, 300::Int)
   qshow helpDialog ()
   return ()
 
@@ -357,9 +357,9 @@ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDial
   loginErr <- nullEnvInt
   setVarInt loginErr "connect" 0
   setVarInt loginErr "auth" 0
-  server   <- text serverInput ()
-  username <- text userInput ()
-  passwd   <- text passwordInput ()
+  --server   <- text serverInput ()
+  --username <- text userInput ()
+  --passwd   <- text passwordInput ()
   if (server == "" || username == "" || passwd == "")
     then do setText labInfo $ "Error: Each field is required"
             return () 
