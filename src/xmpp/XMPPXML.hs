@@ -74,7 +74,7 @@ isChat = Stanzas.isChat
 
 -- |Return true if the stanza is from the given JID.
 isFrom :: String -> StanzaPredicate
-isFrom from (XML a b c ) = from == (getRealJID $ fromMaybe "" ( lookup "from" b ))
+isFrom from (XML _ attr _ ) = from == (getRealJID $ fromMaybe "" ( lookup "from" attr ))
                                 
 getRealJID :: String -> String
 getRealJID (x:xs)
@@ -93,4 +93,12 @@ iqGet = Stanzas.iqGet
 -- |Return true if the stanza is a \"set\" request in the given namespace.
 iqSet :: String -> StanzaPredicate
 iqSet = Stanzas.iqSet
+
+-- |Return true if the stanza is from the given JID.
+getFrom :: XMLElem -> String
+getFrom (XML _ attr _ ) = fromMaybe "" (lookup "from" attr)
+
+-- |Return true if the stanza is from the given JID.
+getType :: XMLElem -> String
+getType (XML _ attr _ ) = fromMaybe "" (lookup "type" attr)
 
