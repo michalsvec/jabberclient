@@ -133,7 +133,6 @@ getContactList c = do
                         ("id", show iqid)]
                        [XML "query" [("xmlns", "jabber:iq:roster")] []]
     (XML a b c) <- waitForStanza c (100::Int) $ (hasNodeName "iq") `conj` (attributeMatches "id" (==(show iqid)))
-    print "xxxxxxxxxxxxxxxxxx"
     let (XML d e f) = (c!!0)
     print $ show f
     return $ getContact f []
