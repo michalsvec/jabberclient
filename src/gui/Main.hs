@@ -134,7 +134,14 @@ main = do
   messageBox <- qLineEdit ()
   --setText messageBox "tady pises zpravy bracho"
   conversationBox <- qTextEdit ()
-  setPlainText conversationBox ""
+  setText conversationBox ""
+
+  conversationFont <- qFont ()
+  setPixelSize conversationFont (11::Int)
+  setFont conversationBox conversationFont
+
+
+  setReadOnly conversationBox True
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
@@ -171,7 +178,7 @@ main = do
 
 
   setColumnMinimumWidth mainLayout (0::Int, 100::Int)
-  setColumnMinimumWidth mainLayout (1::Int, 100::Int)
+  setColumnMinimumWidth mainLayout (1::Int, 150::Int)
   setColumnMinimumWidth mainLayout (2::Int, 100::Int)
   setColumnMinimumWidth mainLayout (3::Int, 150::Int)
   
@@ -179,7 +186,7 @@ main = do
   setLayout dialog mainLayout
   
   -- nastaveni rozmeru
-  resize dialog (450::Int, 500::Int)
+  resize dialog (500::Int, 400::Int)
 
   
   setWindowTitle dialog "hasq-e jabber client"
@@ -213,13 +220,16 @@ main = do
   closeConnection connection 
 
 
+
+
+
 on_about_clicked :: MyQPushButton -> IO ()
 on_about_clicked layout
  =do
   -- help -> abou
   print "aboutclicked"
   helpDialog <- myQDialog
-  labAbout <- qLabel "<center><b>jabber client 3000</b><br><br>Jiří Melichar, xmelic04<br>Pavel Srb, xsrbpa00<br>Michal Švec, xsvecm07<br><br>FIT VUT<br>FPR (c)2009</center>"
+  labAbout <- qLabel "<center><b>jabber client 3000</b><br><br>Jiří Melichar, xmelic04<br>Pavel Srb, xsrbpa00<br>Michal Švec, xsvecm07<br><br>FIT VUT<br>FPR (c)2010</center>"
   helpLayout <- qHBoxLayout ()
   addWidget helpLayout labAbout
   setLayout helpDialog helpLayout
