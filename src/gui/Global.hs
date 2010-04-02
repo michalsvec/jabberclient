@@ -112,7 +112,8 @@ getVarCurrentContact envRef = do
         (Just ref) -> do 
                         val <- readIORef ref
                         return val
-                        
+        Nothing -> return ""
+                                
 -- ------------------------------------------------------------------------------
 
 -- -------------------------------------------------------------------------------------             
@@ -150,5 +151,7 @@ getVarEnvContactList envRef var = do
         (Just ref) -> do 
                         val <- readIORef ref
                         return val
+        Nothing -> return ""
+                       
 
 -- GLOBALNI PROMENNE ------------------------------------------------------------
