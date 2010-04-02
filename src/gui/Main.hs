@@ -15,15 +15,15 @@ module Main where
 import Qtc.ClassTypes.Gui
 import Qtc.Classes.Qccs
 import Qtc.Classes.Gui
-import Qtc.Enums.Classes.Core
+import Qtc.Enums.Classes.Core()
 import Qtc.Core.Base
 import Qtc.Gui.Base
-import Qtc.Core.QCoreApplication
+import Qtc.Core.QCoreApplication()
 import Qtc.Gui.QApplication
 import Qtc.Gui.QDialog
 import Qtc.Gui.QMenuBar
 import Qtc.Gui.QMenu
-import Qtc.Gui.QLayout
+import Qtc.Gui.QLayout()
 import Qtc.Gui.QGridLayout
 import Qtc.Gui.QHBoxLayout
 import Qtc.Gui.QTextEdit
@@ -31,19 +31,18 @@ import Qtc.Gui.QLineEdit
 import Qtc.Gui.QLabel
 import Qtc.Gui.QWidget
 import Qtc.Gui.QPushButton
-import Qtc.Gui.QMessageBox
-import Qtc.Gui.QListView
+import Qtc.Gui.QListView()
 import Qtc.Gui.QFont
-import Qtc.Gui.QListWidgetItem
+import Qtc.Gui.QListWidgetItem()
 import Qtc.Classes.Gui
 import Qtc.Core.QTimer
-import Qtc.Enums.Gui.QDialogButtonBox
+import Qtc.Enums.Gui.QDialogButtonBox()
 import Qtc.Enums.Gui.QLineEdit	-- ePassword
-import Qtc.Gui.QDialogButtonBox
+import Qtc.Gui.QDialogButtonBox()
 import Qtc.Gui.QListWidget
-import Qth.ClassTypes.Core.Size
+import Qth.ClassTypes.Core.Size()
 
-import Qtc.Enums.Gui.QDialog --eRejected :: DialogCode eAccepted :: DialogCode
+import Qtc.Enums.Gui.QDialog() --eRejected :: DialogCode eAccepted :: DialogCode
 import System.Exit
 
 import XMPPLight
@@ -68,21 +67,22 @@ myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
 server :: [Char]
-server   = "jabbim.cz"
+server   = "njs.netlab.cz"
 username :: [Char]
-username = "french"
+username = "jirkamelich"
 passwd :: [Char]
-passwd = "J*7R*g^3;"
+passwd = "abx4C82abx4C82"
 
 main :: IO ()
 main = do
   app <- qApplication ()
   dialog <- myQDialog
-  mb <- qMessageBox dialog
 
-  envRefConn <- nullEnvTCPConnection
+  -- envRefConn <- nullEnvTCPConnection
   envCurrentContactRef <- nullEnvCurrentContact
-  envTCPConnection <- nullEnvTCPConnection
+  -- envTCPConnection <- nullEnvTCPConnection
+  envRefConn <- nullEnvTCPConnection
+  envContactList <- nullEnvContactList
 
   -- zobrazeni uvodniho dialogu pro pripojeni na server
   connDialog <- qDialog dialog
@@ -112,9 +112,7 @@ main = do
   acceptButton <- myQPushButton $ "Connect"
   rejectButton <- myQPushButton $ "Quit"
 
-  envRefConn <- nullEnvTCPConnection
-  envCurrentContactRef <- nullEnvCurrentContact
-  envContactList <- nullEnvContactList
+
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
   connectSlot rejectButton "clicked()" rejectButton "click()" $ on_conn_rejected connDialog
@@ -309,17 +307,14 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
       where 
       processStanza (x:xs) current_contact_jid
                  | isMessage x = do
-                                     --print $ show x
-                                     let sw_from = isFrom current_contact_jid x
-                                     --print $ "is from current:" ++ (show sw_from)
                                      -- jedna se o zpravu
                                      -- potreba vlozit nekam kde si toho uzivatel vsimne
                                      let msg  = fromMaybe "---" (getMessageBody x)
                                      -- print $ (" message stanza received: " ++ msg ++ "]...")
                                      item_count <- count contactList ()
-                                     index <- getContactIndex evnContactList x item_count 0
-                                     from_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
-                                     append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ from_contact ++ "</b></font> &gt;&gt; " ++ msg )
+                                     contact_index <- getContactIndex evnContactList x item_count 0
+                                     from_contact <- getVarEnvContactList evnContactList ( (show contact_index) ++ "n")
+                                     append cBox ("<font color='"++ (get_color_from_array contact_index) ++"'><b>" ++ from_contact ++ "</b></font> &gt;&gt; " ++ msg )
                                      processStanza xs current_contact_jid
                  | isPresence x = do
                                      -- jedna se o presence zpravu
@@ -328,11 +323,11 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                               
                                      item_count <- count contactList ()
                                      -- presenceType <- show "unavailable"                                     
-                                     index <- getContactIndex evnContactList x item_count 0
-                                     --print $ "Index:" ++ ( show index )
+                                     contact_index <- getContactIndex evnContactList x item_count 0
+                                     --print $ "Index:" ++ ( show contact_index )
                                      let presenceType = getType x
                                      
-                                     if ( index >= 0 ) 
+                                     if ( contact_index >= 0 ) 
                                         then do
                                             if ( presenceType == "unavailable" )
                                                 then do 
@@ -340,7 +335,7 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                                 else do
                                                     setBold typeFont True
 
-                                            listItem <- item contactList index
+                                            listItem <- item contactList contact_index
                                             setFont listItem typeFont
                                         else do 
                                             setBold typeFont True 
