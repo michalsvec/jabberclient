@@ -317,16 +317,16 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                      typeFont <- qFont ()
                               
                                      item_count <- count contactList ()
-                                     -- type <- show "unavailable"                                     
+                                     -- presenceType <- show "unavailable"                                     
                                      index <- getContactIndex evnContactList x item_count 0
                                      print $ "Index:" ++ ( show index )
-                                     -- let type = getType x
+                                     let presenceType = getType x
                                      
                                      if ( index >= 0 ) 
                                         then do
-                                            if ( 1 == 1 )
+                                            if ( presenceType == "unavailable" )
                                                 then do 
-                                                    setItalic typeFont True
+                                                    setBold typeFont False
                                                 else do
                                                     setBold typeFont True
 
