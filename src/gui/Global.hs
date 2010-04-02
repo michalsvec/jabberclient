@@ -1,7 +1,9 @@
---
--- Project: jabclient
--- Author:  jirka
---
+-----------------------------------------------------------------------------
+{-| Project   : Varianta - Fun: Jabber client
+    Authors   : Jiří Melichar (xmelic04), Pavel Srb (xsrbpa00)
+--}
+------------------------------------------------------------------------------
+
 module Global where
 
 -- GLOBALNI PROMENNE ---------------------------------------
@@ -9,7 +11,7 @@ module Global where
 -- pro EnvInt typ
 import System.Environment()
 import Data.IORef
-import Control.Monad.State
+import Control.Monad.State 
 
 import TCPConnection
 

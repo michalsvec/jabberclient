@@ -1,11 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
-{-| Program   : client.hs
-    Copyright : tvrdaci 2010
-    Authors   : Michal Svec, Jiri Melichar, Pavel Srb
-    Project   : FPR
-    Version   : 0.0.3
-    Modified  : 02.04.2010
+{-| Project   : Varianta - Fun: Jabber client
+    Authors   : Michal Švec (xsvecm07), Jiří Melichar (xmelic04), Pavel Srb (xsrbpa00)
 --}
 ------------------------------------------------------------------------------
 

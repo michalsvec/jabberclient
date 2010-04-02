@@ -1,7 +1,8 @@
---
--- Project: jabclient
--- Author:  Jirka Melichar a Pavel Srb
---
+-----------------------------------------------------------------------------
+{-| Project   : Varianta - Fun: Jabber client
+    Authors   : Jiří Melichar (xmelic04)
+--}
+------------------------------------------------------------------------------
 
 
 module XMPPXML where

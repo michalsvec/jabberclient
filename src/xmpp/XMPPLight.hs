@@ -1,7 +1,8 @@
---
--- Project: jabclient
--- Author:  Pavel Srb
---
+-----------------------------------------------------------------------------
+{-| Project   : Varianta - Fun: Jabber client
+    Authors   : Pavel Srb (xsrbpa00)
+--}
+------------------------------------------------------------------------------
 
 module XMPPLight where
 
