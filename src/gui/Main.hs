@@ -146,8 +146,8 @@ main = do
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
-  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList messageBox conversationBox contactList messageBox
-  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList messageBox conversationBox contactList messageBox
+  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
+  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
 
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
@@ -204,7 +204,7 @@ main = do
   setup_contact_list envContactList jid_name_list contactList
 
   --nastaveni signalu na oznaceni prvku
-  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList labChatingName conversationBox contactList
+  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList labChatingName messageBox conversationBox contactList
 
   -- nastaveni timeru
   timer <- qTimer ()
