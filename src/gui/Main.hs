@@ -146,8 +146,8 @@ main = do
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
-  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
-  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
+  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList messageBox conversationBox contactList messageBox
+  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList messageBox conversationBox contactList messageBox
 
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
@@ -253,14 +253,15 @@ setup_contact_list envContactList jid_name_list list
                               loop xs (i+1)
             loop [] _ = return ()
 
-on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QLabel() -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
-on_contact_clicked envCurrentContact envContactList current_contact_label cBox list this item
+on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QLabel() -> QLineEdit () -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
+on_contact_clicked envCurrentContact envContactList current_contact_label mBox cBox list this item
  = do
   sss <- currentRow list ()
   current_contact_jid <- getVarEnvContactList envContactList ( show sss )
   current_contact_name <- getVarEnvContactList envContactList ((show sss)++"n")
   setText current_contact_label current_contact_name
   setVarCurrentContact envCurrentContact current_contact_jid
+  setFocus mBox ()
   print sss
   return ()
 
@@ -276,19 +277,21 @@ on_button_clicked envRefConn envRef evnContactList cBox contactList mBox this
  = do
   -- vytahnu si aktualni kontakt se kterym si pisu
   current_contact_jid <- getVarCurrentContact envRef
-  msg <- text mBox ()
+  if current_contact_jid == ""
+    then return()
+    else do msg <- text mBox ()
+            
+            item_count <- count contactList ()
+            index <- getContactIndex_from_jid evnContactList current_contact_jid item_count 0
+            to_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
+            append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ to_contact ++ "</b></font> &lt;&lt; " ++ "<font color='#a1a1a1'>" ++ msg  ++ "</font>" )
   
-  item_count <- count contactList ()
-  index <- getContactIndex_from_jid evnContactList current_contact_jid item_count 0
-  to_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
-  append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ to_contact ++ "</b></font> &lt;&lt; " ++ "<font color='#a1a1a1'>" ++ msg  ++ "</font>" )
-  
-  setText mBox ""
-  -- vytahnu si aktualni pripojeni 
-  tcp_connection <- getVarTCPConnection envRefConn "connection"
-  -- zpravu mu odeslu
-  sendMessage tcp_connection current_contact_jid msg
-  return ()
+            setText mBox ""
+            -- vytahnu si aktualni pripojeni 
+            tcp_connection <- getVarTCPConnection envRefConn "connection"
+            -- zpravu mu odeslu
+            sendMessage tcp_connection current_contact_jid msg
+            return ()
 
 
 on_timer_event :: EnvTCPConnection -> EnvCurrentContact -> EnvContactList -> QTextEdit () -> QListWidget() -> MyQPushButton -> IO ()
