@@ -67,11 +67,11 @@ myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
 server :: [Char]
-server   = "jabber.cz"
+server   = "njs.netlab.cz"
 username :: [Char]
-username = "jab_pavel"
+username = "jirkamelich"
 passwd :: [Char]
-passwd = "jab_pavel"
+passwd = "abx4C82abx4C82"
 
 main :: IO ()
 main = do
@@ -200,20 +200,20 @@ main = do
   -- vytvoreni pripojeni na server       
   connection <- getVarTCPConnection envRefConn "connection"
 
-  -- odeslani infa o tom ze jsem se pripojil
-  sendPresence connection
-
   -- nacteni kontaktu do contact listu
   jid_name_list <- getContactList connection
   setup_contact_list envContactList jid_name_list contactList
 
   --nastaveni signalu na oznaceni prvku
-  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList conversationBox contactList
+  connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList labChatingName conversationBox contactList
 
   -- nastaveni timeru
   timer <- qTimer ()
   connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef envContactList conversationBox contactList
   start timer (1000::Int) 
+
+  -- odeslani infa o tom ze jsem se pripojil
+  sendPresence connection
 
   ok <- qApplicationExec ()
 --  return ()
@@ -239,22 +239,28 @@ on_about_clicked layout
 
 setup_contact_list :: EnvContactList -> [(String,String)] -> QListWidget() -> IO ()
 setup_contact_list envContactList jid_name_list list
-  = do loop jid_name_list 0
-    where 
-        loop :: [(String,String)] -> Int -> IO ()
-        loop ((a, b):xs) i = do 
+  = do  print $ show jid_name_list
+        loop jid_name_list 0
+        where 
+            loop :: [(String,String)] -> Int -> IO ()
+            loop ((a, b):xs) i = do 
                               setVarEnvContactList envContactList (show i) b
                               setVarEnvContactList envContactList ((show i)++"n") a
+                              print "JID:"
+                              print b
+                              print "NAME:"
+                              print a 
                               addItem list a
                               loop xs (i+1)
-        loop [] _ = return ()
+            loop [] _ = return ()
 
-on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
-on_contact_clicked envCurrentContact envContactList cBox list this item
+on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QLabel() -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
+on_contact_clicked envCurrentContact envContactList current_contact_label cBox list this item
  = do
   sss <- currentRow list ()
   current_contact_jid <- getVarEnvContactList envContactList ( show sss )
-  print $ show current_contact_jid
+  current_contact_name <- getVarEnvContactList envContactList ((show sss)++"n")
+  setText current_contact_label current_contact_name
   setVarCurrentContact envCurrentContact current_contact_jid
   print sss
   return ()
@@ -269,11 +275,11 @@ mapContactList contactList jid
 on_button_clicked :: EnvTCPConnection -> EnvCurrentContact -> QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
 on_button_clicked envRefConn envRef cBox mBox this 
  = do
-  msg <- text mBox ()
-  append cBox msg
-  setText mBox ""
   -- vytahnu si aktualni kontakt se kterym si pisu
   current_contact_jid <- getVarCurrentContact envRef
+  msg <- text mBox ()
+  append cBox (current_contact_jid ++ " << " ++ msg )
+  setText mBox ""
   -- vytahnu si aktualni pripojeni 
   tcp_connection <- getVarTCPConnection envRefConn "connection"
   -- zpravu mu odeslu
@@ -303,22 +309,32 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
                                      -- potreba vlozit nekam kde si toho uzivatel vsimne
                                      let msg  = fromMaybe "---" (getMessageBody x)
                                      -- print $ (" message stanza received: " ++ msg ++ "]...")
-                                     append cBox msg
+                                     append cBox (current_contact_jid ++ " >> " ++ msg )
                                      processStanza xs current_contact_jid
                  | isPresence x = do
                                      -- jedna se o presence zpravu
                                      -- do kontakt listu poznacim se se uzivatel prihlasil
-                                     boldFont <- qFont ()
-                                     
+                                     typeFont <- qFont ()
+                              
                                      item_count <- count contactList ()
+                                     -- type <- show "unavailable"                                     
+                                     index <- getContactIndex evnContactList x item_count 0
+                                     print $ "Index:" ++ ( show index )
+                                     -- let type = getType x
                                      
-                                     let index = getContactIndex evnContactList x item_count 0
-                                     
-                                     listItem <- item contactList (0::Int)
+                                     if ( index >= 0 ) 
+                                        then do
+                                            if ( 1 == 1 )
+                                                then do 
+                                                    setItalic typeFont True
+                                                else do
+                                                    setBold typeFont True
 
-                                     setBold boldFont True 
-                                     setFont listItem boldFont
-                                     
+                                            listItem <- item contactList index
+                                            setFont listItem typeFont
+                                        else do 
+                                            setBold typeFont True 
+                                                                          
                                      print $ "\n\n presence stanza received... \n\n"
                                      processStanza xs current_contact_jid
                  | otherwise = do
@@ -332,14 +348,17 @@ on_timer_event envRefConn envRef evnContactList cBox contactList this
 
 getContactIndex :: EnvContactList -> XMLElem -> Int -> Int -> IO (Int)
 getContactIndex envContactList stanza limit cur = do 
-                                                        if limit >= cur 
+                                                        if cur >= limit 
                                                             then do 
                                                                 return (-1)
                                                             else do 
                                                                 temp <- getVarEnvContactList envContactList ( show cur )
                                                                 let is_from_cur_index = isFrom temp stanza
                                                                 if is_from_cur_index 
-                                                                    then return cur
+                                                                    then do
+                                                                        print "Temp:"
+                                                                        print temp
+                                                                        return cur
                                                                     else do
                                                                         getContactIndex envContactList stanza limit (cur+1)
                                                         
