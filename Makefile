@@ -17,14 +17,15 @@ HCFLAGS = -Wall -O2 -threaded -package qt --make -i./lib/XMPP-0.0.1 -odir $(BUIL
 OUTDIR = .
 BUILDDIR = $(OUTDIR)/build
 OUTPROJFILE = $(OUTDIR)/jabclient
-#OUTPROJFILE = $(OUTDIR)/test
+
 
 # Source paths
 SRCDIR = ./src
 #SRCFILES = ./test.hs
 SRCFILES = $(SRCDIR)/gui/Main.hs \
 	$(SRCDIR)/gui/Global.hs \
-	$(SRCDIR)/xmpp/*.hs
+	$(SRCDIR)/xmpp/XMPPLight.hs \
+	$(SRCDIR)/xmpp/XMPPXML.hs
 
 # Project compilation
 all: $(SRCFILES)
@@ -38,6 +39,6 @@ clean:
 # Packing
 pack:
 	make clean
-	zip -r xxx.zip $(SRCDIR) Makefile README
+	zip -r fpr-fun-xsrbpa00.zip $(SRCDIR) Makefile rozdeleni ./doc/* ./lib/*
 
 # End of file
