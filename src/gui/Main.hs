@@ -140,13 +140,14 @@ main = do
   setPixelSize conversationFont (11::Int)
   setFont conversationBox conversationFont
 
+  contactList <- qListWidget ()
 
   setReadOnly conversationBox True
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
-  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
-  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
+  connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
+  connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef envContactList conversationBox contactList messageBox
 
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
@@ -163,8 +164,6 @@ main = do
   setMenuBar mainLayout menuBar
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
-
-  contactList <- qListWidget ()
 
   -- pridani vsech widgetu do aplikace
   labChatingWith <- qLabel "Chatting with:"
@@ -272,13 +271,18 @@ mapContactList contactList jid
     --user <- jid
     addItem contactList jid
 
-on_button_clicked :: EnvTCPConnection -> EnvCurrentContact -> QTextEdit () -> QLineEdit () -> MyQPushButton -> IO ()
-on_button_clicked envRefConn envRef cBox mBox this 
+on_button_clicked :: EnvTCPConnection -> EnvCurrentContact -> EnvContactList -> QTextEdit () -> QListWidget() -> QLineEdit () -> MyQPushButton -> IO ()
+on_button_clicked envRefConn envRef evnContactList cBox contactList mBox this 
  = do
   -- vytahnu si aktualni kontakt se kterym si pisu
   current_contact_jid <- getVarCurrentContact envRef
   msg <- text mBox ()
-  append cBox ("<font color='#a1a1a1'>" ++ current_contact_jid ++ "</font> &lt;&lt; " ++ msg )
+  
+  item_count <- count contactList ()
+  index <- getContactIndex_from_jid evnContactList current_contact_jid item_count 0
+  to_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
+  append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ to_contact ++ "</b></font> &lt;&lt; " ++ "<font color='#a1a1a1'>" ++ msg  ++ "</font>" )
+  
   setText mBox ""
   -- vytahnu si aktualni pripojeni 
   tcp_connection <- getVarTCPConnection envRefConn "connection"
@@ -365,24 +369,23 @@ getContactIndex envContactList stanza limit cur = do
                                                                     else do
                                                                         getContactIndex envContactList stanza limit (cur+1)
                                                         
-{-
-                                                | limit >= cur                      = return (-1)
-                                                | limit < cur && is_from_cur_index  = return cur
-                                                | otherwise                         = 
-                                                where 
-                                                        is_from_cur_index :: Bool
-                                                        is_from_cur_index = do 
-                                                                                
--}
-{-
-= do
-                                                        is_from_cur_index <- 
-                                                        if limit>= cur
-                                                                return -1
-                                                        else 
-                                                                return getContactIndex envContactList stanza limit (cur+1)   
 
--}
+getContactIndex_from_jid :: EnvContactList -> String -> Int -> Int -> IO (Int)
+getContactIndex_from_jid envContactList jid limit cur = do 
+                                                        if cur >= limit 
+                                                            then do 
+                                                                return (-1)
+                                                            else do 
+                                                                temp <- getVarEnvContactList envContactList ( show cur )
+                                                                if temp == jid 
+                                                                    then do
+                                                                        print "Temp:"
+                                                                        print temp
+                                                                        return cur
+                                                                    else do
+                                                                        getContactIndex_from_jid envContactList jid limit (cur+1)
+
+
 
 on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
 on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this = do
