@@ -11,7 +11,6 @@
 
 module Main where
 
-
 import Qtc.ClassTypes.Gui
 import Qtc.Classes.Qccs
 import Qtc.Classes.Gui
@@ -41,18 +40,18 @@ import Qtc.Enums.Gui.QLineEdit	-- ePassword
 import Qtc.Gui.QDialogButtonBox()
 import Qtc.Gui.QListWidget
 import Qth.ClassTypes.Core.Size()
-
 import Qtc.Enums.Gui.QDialog() --eRejected :: DialogCode eAccepted :: DialogCode
+
 import System.Exit
+import Control.Monad.State
+import Maybe
+
+import XMLParse
 
 import XMPPLight
 import XMPPXML
-import XMLParse
-import Control.Monad.State
-
-import Maybe
-
 import Global
+
 
 type MyQDialog = QWidgetSc (CMyQDialog)
 data CMyQDialog = CMyQDialog
@@ -66,14 +65,7 @@ data CMyQPushButton = CMyQPushButton
 myQPushButton :: String -> IO (MyQPushButton)
 myQPushButton t = qSubClass $ qPushButton t
 
-server :: [Char]
-server   = "njs.netlab.cz"
-username :: [Char]
-username = "jirkamelich"
-passwd :: [Char]
-passwd = "abx4C82abx4C82"
-
-main :: IO ()
+main :: IO (Int)
 main = do
   app <- qApplication ()
   dialog <- myQDialog
@@ -151,16 +143,16 @@ main = do
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
 
-  menuBar <- qMenuBar ()
+  mainMenuBar <- qMenuBar ()
   fileMenu <- qMenu ("&File", dialog)
   helpMenu <- qMenu ("&Help", dialog)
   exitAction <- addAction fileMenu "E&xit"
   aboutAction <- addAction helpMenu "A&bout"
-  addMenu menuBar fileMenu
-  addMenu menuBar helpMenu
+  addMenu mainMenuBar fileMenu
+  addMenu mainMenuBar helpMenu
   connectSlot exitAction "triggered()" app "quit()" ()
   connectSlot aboutAction "triggered()" dialog "click()" $ on_about_clicked
-  setMenuBar mainLayout menuBar
+  setMenuBar mainLayout mainMenuBar
 
   connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
 
@@ -213,13 +205,13 @@ main = do
   -- odeslani infa o tom ze jsem se pripojil
   sendPresence connection
 
-  ok <- qApplicationExec ()
---  return ()
+  retCode <- qApplicationExec ()
   closeConnection connection 
+  return retCode
 
 
 on_about_clicked :: MyQPushButton -> IO ()
-on_about_clicked layout
+on_about_clicked _
  =do
   -- help -> abou
   helpDialog <- myQDialog
@@ -251,7 +243,7 @@ setup_contact_list envContactList jid_name_list list
             loop [] _ = return ()
 
 on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QLabel() -> QLineEdit () -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
-on_contact_clicked envCurrentContact envContactList current_contact_label mBox cBox list this item
+on_contact_clicked envCurrentContact envContactList current_contact_label mBox _ list _ _
  = do
   curIndex <- currentRow list ()
   current_contact_jid <- getVarEnvContactList envContactList ( show curIndex )
@@ -269,7 +261,7 @@ mapContactList contactList jid
     addItem contactList jid
 
 on_button_clicked :: EnvTCPConnection -> EnvCurrentContact -> EnvContactList -> QTextEdit () -> QListWidget() -> QLineEdit () -> MyQPushButton -> IO ()
-on_button_clicked envRefConn envRef evnContactList cBox contactList mBox this 
+on_button_clicked envRefConn envRef evnContactList cBox contactList mBox _
  = do
   -- vytahnu si aktualni kontakt se kterym si pisu
   current_contact_jid <- getVarCurrentContact envRef
@@ -278,9 +270,9 @@ on_button_clicked envRefConn envRef evnContactList cBox contactList mBox this
     else do msg <- text mBox ()
             
             item_count <- count contactList ()
-            index <- getContactIndex_from_jid evnContactList current_contact_jid item_count 0
-            to_contact <- getVarEnvContactList evnContactList ( (show index) ++ "n")
-            append cBox ("<font color='"++ (get_color_from_array index) ++"'><b>" ++ to_contact ++ "</b></font> &lt;&lt; " ++ "<font color='#a1a1a1'>" ++ msg  ++ "</font>" )
+            curIndex <- getContactIndex_from_jid evnContactList current_contact_jid item_count 0
+            to_contact <- getVarEnvContactList evnContactList ( (show curIndex) ++ "n")
+            append cBox ("<font color='"++ (get_color_from_array curIndex) ++"'><b>" ++ to_contact ++ "</b></font> &lt;&lt; " ++ "<font color='#a1a1a1'>" ++ msg  ++ "</font>" )
   
             setText mBox ""
             -- vytahnu si aktualni pripojeni 
@@ -291,7 +283,7 @@ on_button_clicked envRefConn envRef evnContactList cBox contactList mBox this
 
 
 on_timer_event :: EnvTCPConnection -> EnvCurrentContact -> EnvContactList -> QTextEdit () -> QListWidget() -> MyQPushButton -> IO ()
-on_timer_event envRefConn envRef evnContactList cBox contactList this
+on_timer_event envRefConn envRef evnContactList cBox contactList _
    = do
     current_contact_jid <- getVarCurrentContact envRef
     tcp_connection <- getVarTCPConnection envRefConn "connection"
@@ -386,24 +378,24 @@ getContactIndex_from_jid envContactList jid limit cur = do
 
 
 on_conn_accepted :: EnvTCPConnection -> QLabel () -> QLineEdit () -> QLineEdit () -> QLineEdit () -> QDialog () -> MyQPushButton -> IO ()
-on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog this = do
+on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog _ = do
   loginErr <- nullEnvInt
   setVarInt loginErr "connect" 0
   setVarInt loginErr "auth" 0
---  server   <- text serverInput ()
---  username <- text userInput ()
---  passwd   <- text passwordInput ()
+  server   <- text serverInput ()
+  username <- text userInput ()
+  passwd   <- text passwordInput ()
   if (server == "" || username == "" || passwd == "")
     then do setText labInfo $ "Error: Each field is required"
             return () 
-    else do connection <- connectToServer server `catch` (\e -> do
+    else do connection <- connectToServer server `catch` (\_ -> do
               setText labInfo $ "Error: Can't connect to server"
               setVarInt loginErr "connect" 1
               emptyConnection)
             code <- getVarInt loginErr "connect"
             if code == 1
               then return () 
-              else do login connection server username passwd `catch` (\e -> do
+              else do login connection server username passwd `catch` (\_ -> do
                         setText labInfo $ "Error: Bad login or password"
                         setVarInt loginErr "auth" 1
                         return ())
@@ -415,14 +407,14 @@ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDial
 
 
 on_conn_rejected :: QDialog () -> MyQPushButton -> IO ()
-on_conn_rejected connDialog this = do
+on_conn_rejected connDialog _ = do
   reject connDialog ()
 
 
 
 get_color_from_array :: Int -> String
-get_color_from_array index
+get_color_from_array colorIndex
  = do
   let colors = ["#6B6C42","#6F613C","#657F7C","#FF5864","#DE7E0E","#B4C533","#ABACC1","#110757","#3C5B16","#660C2B","#567184","#C9D411","#D3A67C","#38176A","#877D95","#E17709"]
-  (colors !! (index `mod` (length colors)))
+  (colors !! (colorIndex `mod` (length colors)))
 

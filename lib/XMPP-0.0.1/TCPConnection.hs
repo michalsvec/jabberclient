@@ -47,7 +47,7 @@ instance XMPPConnection TCPConnection where
     sendStanza (TCPConnection h _) x =
         let str = xmlToString True x in
         do
-          putStrLn $ "sent '" ++ str ++ "'"
+          --putStrLn $ "sent '" ++ str ++ "'"
           hPutStr h str
     closeConnection (TCPConnection h _) =
         hClose h
@@ -56,7 +56,7 @@ parseBuffered :: TCPConnection -> Parser a -> IO a
 parseBuffered c@(TCPConnection h bufvar) parser = do
   buffer <- readIORef bufvar
   input <- getString h
-  putStrLn $ "got '" ++ buffer ++ input ++ "'"
+  --putStrLn $ "got '" ++ buffer ++ input ++ "'"
   case parse (getRest parser) "" (buffer++input) of
     Right (result, rest) ->
         do
@@ -64,7 +64,7 @@ parseBuffered c@(TCPConnection h bufvar) parser = do
           return result
     Left e ->
         do
-          putStrLn $ "An error?  Hopefully doesn't matter.\n"++(show e)
+          --putStrLn $ "An error?  Hopefully doesn't matter.\n"++(show e)
           parseBuffered c parser
 
 getString :: Handle -> IO String

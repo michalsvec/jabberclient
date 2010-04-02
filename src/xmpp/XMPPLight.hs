@@ -49,7 +49,7 @@ login c server username password = do
                                              XML "password" []
                                                      [CData password],
                                              XML "resource" []
-                                                     [CData "hsXmpp"]]]
+                                                     [CData "hasq-e jabber client"]]]
       case getAttr "type" response' of
         Just "result" -> return () --putStrLn "Authentication succeeded"
         _ -> ioError $ userError "Authentication failed"
