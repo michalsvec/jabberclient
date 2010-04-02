@@ -24,6 +24,7 @@ import Qtc.Gui.QMenuBar
 import Qtc.Gui.QMenu
 import Qtc.Gui.QLayout
 import Qtc.Gui.QGridLayout
+import Qtc.Gui.QHBoxLayout
 import Qtc.Gui.QTextEdit
 import Qtc.Gui.QLineEdit
 import Qtc.Gui.QLabel
@@ -36,8 +37,10 @@ import Qtc.Gui.QListWidgetItem
 import Qtc.Classes.Gui
 import Qtc.Core.QTimer
 import Qtc.Enums.Gui.QDialogButtonBox
+import Qtc.Enums.Gui.QLineEdit	-- ePassword
 import Qtc.Gui.QDialogButtonBox
 import Qtc.Gui.QListWidget
+import Qth.ClassTypes.Core.Size
 
 import Qtc.Enums.Gui.QDialog --eRejected :: DialogCode eAccepted :: DialogCode
 import System.Exit
@@ -86,9 +89,10 @@ main = do
   setModal connDialog True
   
   userInput <- qLineEdit () 
-  passwordInput <- qLineEdit () 
   serverInput <- qLineEdit () 
-
+  passwordInput <- qLineEdit () 
+  setEchoMode passwordInput (ePassword::EchoMode)
+  
   labInfo <- qLabel "Connect pls"
   lab1 <- qLabel "Server: "
   lab2 <- qLabel "User: "
@@ -104,8 +108,8 @@ main = do
   
   -- tlacitka pro potverzeni - v pripade odmitnuti zavre aplikaci, 
   -- v pripade potvrzeni vola funkci, ktera se prihlasi a zmizi okenko
-  acceptButton <- myQPushButton $ "Connect me, bro"
-  rejectButton <- myQPushButton $ "Piss off"
+  acceptButton <- myQPushButton $ "Connect"
+  rejectButton <- myQPushButton $ "Quit"
 
   envRefConn <- nullEnvTCPConnection
   envCurrentContactRef <- nullEnvCurrentContact
@@ -126,51 +130,60 @@ main = do
   setVarCurrentContact envCurrentContactRef "jirkamelich@njs.netlab.cz"
   
   -- Definice jednotlivych widgetu v programu
-  -- tlacitko
   sendButton <- myQPushButton $ "Odeslat"
-  contactButton <- myQPushButton $ "Kontaktovat"
   messageBox <- qLineEdit ()
-  setText messageBox "tady pises zpravy bracho"
+  --setText messageBox "tady pises zpravy bracho"
   conversationBox <- qTextEdit ()
-  setPlainText conversationBox "tohle jsme si uz vsechno napsali - cool ne? :)"
+  setPlainText conversationBox ""
 
  -- Definice jednotlivych widgetu v programu
   -- spojeni slotu a signalu 
   connectSlot sendButton "clicked()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
   connectSlot messageBox "returnPressed()" sendButton "click()" $ on_button_clicked envRefConn envCurrentContactRef conversationBox messageBox
+
  -- defunice layoutu aplikace
   mainLayout <- qGridLayout ()
 
   menuBar <- qMenuBar ()
   fileMenu <- qMenu ("&File", dialog)
-  --connectAction <- addAction fileMenu "&Connect"
+  helpMenu <- qMenu ("&Help", dialog)
   exitAction <- addAction fileMenu "E&xit"
+  aboutAction <- addAction helpMenu "A&bout"
   addMenu menuBar fileMenu
+  addMenu menuBar helpMenu
   connectSlot exitAction "triggered()" app "quit()" ()
+  connectSlot aboutAction "triggered()" sendButton "timerEvent()" $ on_about_clicked
   setMenuBar mainLayout menuBar
+
+
+  connectSlot acceptButton "clicked()" acceptButton "click()" $ on_conn_accepted envRefConn labInfo userInput passwordInput serverInput connDialog 
 
   contactList <- qListWidget ()
 
   -- pridani vsech widgetu do aplikace
-  addWidget mainLayout (conversationBox, 0::Int, 0::Int, 1::Int, 2::Int)
-  addWidget mainLayout (messageBox, 1::Int, 0::Int, 1::Int, 2::Int)
-  addWidget mainLayout (sendButton, 1::Int, 1::Int, 1::Int, 1::Int)
-  addWidget mainLayout (contactList, 0::Int, 2::Int, 1::Int, 1::Int)
-  addWidget mainLayout (contactButton, 1::Int, 2::Int, 1::Int, 1::Int)
+  labChatingWith <- qLabel "Chatting with:"
+  labChatingName <- qLabel "Nobody"
+  addWidget mainLayout (labChatingWith, 0::Int, 0::Int, 1::Int, 1::Int)
+  addWidget mainLayout (labChatingName, 0::Int, 1::Int, 1::Int, 1::Int)
+  addWidget mainLayout (conversationBox, 1::Int, 0::Int, 1::Int, 3::Int)
+  addWidget mainLayout (messageBox, 2::Int, 0::Int, 1::Int, 2::Int)
+  addWidget mainLayout (sendButton, 2::Int, 2::Int, 1::Int, 1::Int)
+  addWidget mainLayout (contactList, 0::Int, 3::Int, 3::Int, 1::Int)
 
-  setColumnMinimumWidth mainLayout (0::Int, 300::Int)
+
+  setColumnMinimumWidth mainLayout (0::Int, 100::Int)
+  setColumnMinimumWidth mainLayout (1::Int, 100::Int)
+  setColumnMinimumWidth mainLayout (2::Int, 100::Int)
+  setColumnMinimumWidth mainLayout (3::Int, 150::Int)
   
   -- nastaveni layoutu
   setLayout dialog mainLayout
   
-  -- nastaveni timeru
-{-
-  timer <- qTimer ()
-  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event conversationBox messageBox
-  start timer (1000::Int)
--}  
+  -- nastaveni rozmeru
+  resize dialog (450::Int, 500::Int)
+
   
-  setWindowTitle dialog "Jabber client 3000"
+  setWindowTitle dialog "hasq-e jabber client"
   qshow dialog ()
 
   retDialogCode <- exec connDialog ()
@@ -187,22 +200,32 @@ main = do
   -- nacteni kontaktu do contact listu
   jid_name_list <- getContactList connection
   setup_contact_list envContactList jid_name_list contactList
-      
-  --mapM_ (mapContactList contactList) ["jirik", "misa", "paja"]
+
   --nastaveni signalu na oznaceni prvku
   connectSlot contactList "itemDoubleClicked(QListWidgetItem*)" dialog "click(QListWidgetItem*)" $ on_contact_clicked envCurrentContactRef envContactList conversationBox contactList
 
-
-
   -- nastaveni timeru
-
   timer <- qTimer ()
-  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef envContactList conversationBox
-  start timer (1000::Int)
+  connectSlot timer "timeout()" sendButton "timerEvent()" $ on_timer_event envRefConn envCurrentContactRef envContactList conversationBox contactList
+  start timer (1000::Int) 
 
   ok <- qApplicationExec ()
 --  return ()
   closeConnection connection 
+
+
+on_about_clicked :: MyQPushButton -> IO ()
+on_about_clicked layout
+ =do
+  -- help -> abou
+  print "aboutclicked"
+  helpDialog <- myQDialog
+  labAbout <- qLabel "jabber client 3000\n srbpa,melic,svecm\n(c)2009"
+  helpLayout <- qHBoxLayout ()
+  addWidget helpLayout labAbout
+  setLayout helpDialog helpLayout
+  qshow helpDialog ()
+  return ()
 
 setup_contact_list :: EnvContactList -> [(String,String)] -> QListWidget() -> IO ()
 setup_contact_list envContactList jid_name_list list
@@ -219,7 +242,6 @@ setup_contact_list envContactList jid_name_list list
 on_contact_clicked :: EnvCurrentContact -> EnvContactList -> QTextEdit() -> QListWidget() -> QWidget() -> QListWidgetItem() -> IO ()
 on_contact_clicked envCurrentContact envContactList cBox list this item
  = do
-  append cBox "tralala"
   sss <- currentRow list ()
   current_contact_jid <- getVarEnvContactList envContactList ( show sss )
   print $ show current_contact_jid
